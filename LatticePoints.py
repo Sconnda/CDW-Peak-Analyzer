@@ -73,10 +73,10 @@ def findNeighbors(data,x0,y0):
 		cluster.append((data[y][x],x,y))
 		data[y][x] = threshold-1
 
-		# Mark point
-		pt = Point(x,y)
-		pt.setOutline(color_rgb(255,0,0))
-		pt.draw(win)
+		# Mark cluster
+		# pt = Point(x,y)
+		# pt.setOutline(color_rgb(255,0,0))
+		# pt.draw(win)
 
 		# Look through neighbors to find points to investigate
 		for dy in [-1,0,1]:
@@ -104,6 +104,31 @@ def findClusters(data):
 
 	return clusters
 
+# Find peaks in clusters with COM calculations
+def findPeaks(clusters):
+	peaks = []
+
+	for cluster in clusters:
+		dataSum = 0
+		xCM = 0
+		yCM = 0
+		for pt in cluster:
+			(data,x,y) = pt
+			dataSum += data
+			xCM += data*x
+			yCM += data*y
+		xCM /= dataSum
+		yCM /= dataSum
+		peaks.append((xCM,yCM))
+
+		# Mark peaks
+		pt = Circle(Point(xCM,yCM),3)
+		pt.setFill(color_rgb(255,0,0))
+		pt.setOutline(color_rgb(255,0,0))
+		pt.draw(win)
+
+	return peaks
+
 def main():
 	filename = "CDW_GonTaS2"
 	data = np.loadtxt(filename+".txt")
@@ -128,6 +153,9 @@ def main():
 
 	# Identify all clusters around lattice points
 	clusters = findClusters(data)
+
+	# Identify the peaks within lattice point clusters
+	peaks = findPeaks(clusters)
 
 	# Close window only after mouse click in window
 	win.getMouse()
