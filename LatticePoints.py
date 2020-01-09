@@ -1,6 +1,9 @@
 import os
 from os import path
 
+# For ease of debugging
+import time
+
 import numpy as np
 
 from graphics import *
@@ -47,12 +50,29 @@ def setBackground(filename, data):
 	img = Image(Point(size_x/2,size_y/2), filename+".png")
 	return img
 
-def findNeighbors(data,win,x,y):
-	peak = [[data[y][x],x,y]]
-	data[y][x] = 0
-	pt = Point(x,y)
-	pt.setOutline(color_rgb(255,0,0))
-	pt.draw(win)
+def findNeighbors(data,win,x0,y0):
+	pointList = [(x0,y0)]
+	peak = []
+
+	while len(pointList) > 0:
+		(x,y) = pointList.pop()
+		if data[y][x] < threshold:
+			continue
+		peak.append((data[y][x],x,y))
+		data[y][x] = threshold-1
+		# Mark point
+		pt = Point(x,y)
+		pt.setOutline(color_rgb(255,0,0))
+		pt.draw(win)
+
+		for dy in [-1,0,1]:
+			for dx in [-1,0,1]:
+				xp = x+dx
+				yp = y+dy
+				if xp < 0 or yp < 0 or xp >= size_x or yp >= size_y:
+					break
+				if data[yp][xp] > threshold:
+					pointList.append((xp,yp))
 
 	return peak,data
 
@@ -61,13 +81,13 @@ def findPeaks(data, win):
 	peaks = []
 
 	# !!Change back to size_x, size_y
-	for y in range(50):
-		for x in range(50):
+	for y in range(size_y):
+		for x in range(size_x):
 			if data2[y][x] > threshold:
 				peak,data2 = findNeighbors(data2, win, x,y)
+				print(peak)
 				peaks.append(peak)
 
-	print(peaks)
 	return 0
 
 def main():
@@ -84,7 +104,7 @@ def main():
 	bg = setBackground(filename, data)
 	bg.draw(win)
 
-	# findPeaks(data, win)
+	findPeaks(data, win)
 
 	win.getMouse()
 	win.close()
