@@ -54,14 +54,6 @@ def findNeighbors(data,win,x,y):
 	pt.setOutline(color_rgb(255,0,0))
 	pt.draw(win)
 
-	for dy in [-1,0,1]:
-		for dx in [-1,0,1]:
-			if data[y+dy][x+dx] > threshold:
-				peak2,data = findNeighbors(data,win,x+dx,y+dy)
-				peak += peak2
-				print(data[y][x])
-				time.sleep(0.1)
-
 	return peak,data
 
 def findPeaks(data, win):
