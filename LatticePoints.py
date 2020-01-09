@@ -9,15 +9,18 @@ import numpy as np
 from graphics import *
 from PIL import Image as NewImage
 
+# Declaring global variables_____________________
+# Maximum value in data
+max_point = 0
+# Threshold value for considering a data point part of a cluster around any lattice point (rather than the space between clusters)
 threshold = 0
+# Window and size of window
+win = 0
 size_x = 512
 size_y = 512
 
+# Generate an image file for the data
 def createDataImage(filename,data):
-
-	# Determine data value corresponding to white
-	max_point = max(max(line) for line in data)
-	print(max_point)
 
 	# Create window for drawing
 	size_x = len(data[0])
@@ -34,37 +37,48 @@ def createDataImage(filename,data):
 			pt.setOutline(color_rgb(color,color,color))
 			pt.draw(winGen)
 
+	# Save drawing as image file for data
 	winGen.postscript(file=filename+".eps",colormode="gray")
 	winGen.close()
-
 	img = NewImage.open(filename+".eps")
 	img.save(filename+".png","png")
 
+# Show raw data as image backdrop
 def setBackground(filename, data):
+
 	# True if image does not exist
 	noImage = not path.exists(filename+".png")
 
 	if noImage:
 		createDataImage(filename, data)
 
+	# Find image file
 	img = Image(Point(size_x/2,size_y/2), filename+".png")
 	return img
 
-def findNeighbors(data,win,x0,y0):
+# Identify the points corresponding to a single cluster by finding neighboring points that exceed the threshold value
+def findNeighbors(data,x0,y0):
+
+	# List of points identified in the cluster and the associated data value
+	cluster = []
+	# List of points to investigate, updated with neighbors from each identified point that meet the threshold
 	pointList = [(x0,y0)]
-	peak = []
 
 	while len(pointList) > 0:
 		(x,y) = pointList.pop()
+		# Remove redundancies from previous updates to pointList that have already been investigated
 		if data[y][x] < threshold:
 			continue
-		peak.append((data[y][x],x,y))
+		# Add point to cluster and make sure the point is not added back to the point list
+		cluster.append((data[y][x],x,y))
 		data[y][x] = threshold-1
+
 		# Mark point
 		pt = Point(x,y)
 		pt.setOutline(color_rgb(255,0,0))
 		pt.draw(win)
 
+		# Look through neighbors to find points to investigate
 		for dy in [-1,0,1]:
 			for dx in [-1,0,1]:
 				xp = x+dx
@@ -74,29 +88,37 @@ def findNeighbors(data,win,x0,y0):
 				if data[yp][xp] > threshold:
 					pointList.append((xp,yp))
 
-	return peak,data
+	return cluster,data
 
-def findPeaks(data, win):
-	data2 = data
-	peaks = []
+# Find and return all clusters of bright spots where peaks are located
+def findClusters(data):
+	clusters = []
 
-	# !!Change back to size_x, size_y
+	# Search through all points to start building clusters
 	for y in range(size_y):
 		for x in range(size_x):
-			if data2[y][x] > threshold:
-				peak,data2 = findNeighbors(data2, win, x,y)
-				print(peak)
-				peaks.append(peak)
+			if data[y][x] > threshold:
+				# Data array for the search is updated to avoid searching through points that have already been associated to clusters
+				cluster,data = findNeighbors(data,x,y)
+				clusters.append(cluster)
 
-	return 0
+	return clusters
 
 def main():
 	filename = "CDW_GonTaS2"
 	data = np.loadtxt(filename+".txt")
 
+	# Identify width and height of data array
+	global size_x, size_y
 	size_x = len(data[0])
 	size_y = len(data)
 
+	# Determine data value corresponding to white
+	global max_point, threshold
+	max_point = max(max(line) for line in data)
+	threshold = 0.2*max_point
+
+	global win
 	win = GraphWin('CDW Data', size_x, size_y)
 	win.setBackground('black')
 
@@ -104,8 +126,10 @@ def main():
 	bg = setBackground(filename, data)
 	bg.draw(win)
 
-	findPeaks(data, win)
+	# Identify all clusters around lattice points
+	clusters = findClusters(data)
 
+	# Close window only after mouse click in window
 	win.getMouse()
 	win.close()
 
