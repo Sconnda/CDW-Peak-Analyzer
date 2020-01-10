@@ -129,6 +129,93 @@ def findPeaks(clusters):
 
 	return peaks
 
+# Check if two vectors represent the same vector if the data was perfect
+def vectorsSimilar(v1,v2):
+	(x1,y1) = v1
+	(x2,y2) = v2
+	v1Len = np.sqrt(sum(i**2 for i in v1))
+	v2Len = np.sqrt(sum(i**2 for i in v2))
+	# False if the vector lengths are too different
+	if np.abs(v1Len-v2Len)/min(v1Len,v2Len) > 0.2:
+		return False
+	cosThet = (x1*x2+y1*y2)/(v1Len*v2Len)
+	# False if the directions of the vectors are too different
+	if cosThet < 0.8:
+		return False
+	return True
+
+# Find primitive lattice vectors
+def findLatticeVectors(peaks):
+	vectors = []
+
+	# Identify the 6 shortest vectors connecting to neighboring peaks from each peak (stored in vectors)
+	for peak in peaks:
+		peakVectors = []
+		for peak2 in peaks:
+			if peak2 != peak:
+				test = (peak2[0]-peak[0],peak2[1]-peak[1])
+				if len(peakVectors) == 6:
+					testLen = np.sqrt(sum(x**2 for x in test))
+					index,maxLen = 0,0
+					for i, vector in enumerate(peakVectors):
+						vectorLen = np.sqrt(sum(x**2 for x in vector))
+						if vectorLen > maxLen:
+							maxLen = vectorLen
+							index = i
+					if maxLen > testLen:
+						peakVectors[index] = test
+				else:
+					peakVectors.append(test)
+		for vec in peakVectors:
+			(x0,y0) = peak
+			(dx,dy) = vec
+			(x,y) = (x0+dx,y0+dy)
+			# ln = Line(Point(x0,y0), Point(x,y))
+			# ln.setOutline(color_rgb(0,255,0))
+			# ln.draw(win)
+		vectors += peakVectors
+
+	# Group together similar vectors (same if data is perfect, to identify primitive vectors as the most common)
+	vectors2 = vectors
+	vectorClusters = []
+
+	while len(vectors2) > 0:
+		vec = vectors2.pop(0)
+		cluster = [vec]
+		vListLen = len(vectors2)
+
+		for j in range(vListLen):
+			i = vListLen-1-j
+			vec2 = vectors[i]
+			if vectorsSimilar(vec,vec2):
+				cluster.append(vec2)
+				vectors2.pop(i)
+
+		vectorClusters.append(cluster)
+
+	# Identify the two groups with the largest number of vectors (associated with the primitive vectors)
+	maxVecClusters = []
+
+	vectorClusterLengths = []
+	for vectorCluster in vectorClusters:
+		vectorClusterLengths.append(len(vectorCluster))
+
+	i1 = vectorClusterLengths.index(max(vectorClusterLengths))
+	vectorClusterLengths.pop(i1)
+	maxVecClusters.append(vectorClusters.pop(i1))
+	i2 = vectorClusterLengths.index(max(vectorClusterLengths))
+	vectorClusterLengths.pop(i2)
+	maxVecClusters.append(vectorClusters.pop(i2))
+
+	# Take averages within vector group to settle on primitive vectors
+	primitives = []
+	length1 = len(maxVecClusters[0])
+	length2 = len(maxVecClusters[1])
+	primitives.append((sum(x for (x,y) in maxVecClusters[0])/length1,sum(y for (x,y) in maxVecClusters[0])/length1))
+	primitives.append((sum(x for (x,y) in maxVecClusters[1])/length2,sum(y for (x,y) in maxVecClusters[1])/length2))
+
+	return primitives
+
 def main():
 	filename = "CDW_GonTaS2"
 	data = np.loadtxt(filename+".txt")
@@ -156,6 +243,21 @@ def main():
 
 	# Identify the peaks within lattice point clusters
 	peaks = findPeaks(clusters)
+
+	# Identify primitive vectors
+	vectors = findLatticeVectors(peaks)
+
+	# Show primitive vectors off of every peak
+	for peak in peaks:
+		(x,y) = peak
+		(dx1,dy1) = vectors[0]
+		(dx2,dy2) = vectors[1]
+		ln1 = Line(Point(x,y),Point(x+dx1,y+dy1))
+		ln1.setOutline(color_rgb(0,0,255))
+		ln1.draw(win)
+		ln2 = Line(Point(x,y),Point(x+dx2,y+dy2))
+		ln2.setOutline(color_rgb(0,0,255))
+		ln2.draw(win)
 
 	# Close window only after mouse click in window
 	win.getMouse()
