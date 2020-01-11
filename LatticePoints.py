@@ -216,6 +216,41 @@ def findLatticeVectors(peaks):
 
 	return primitives
 
+def findRadius(cluster, peak):
+	(x0,y0) = peak
+	dataSum = 0
+	radius = 0
+	for pt in cluster:
+		(data,x,y) = pt
+		rSq = (x-x0)**2+(y-y0)**2
+		dataSum += data
+		radius += data*rSq
+	radius /= dataSum
+	radius = np.sqrt(radius)
+
+	return radius,dataSum
+
+def findAveRadius(clusters,peaks,vectors):
+	pLen = [np.sqrt(sum(x**2 for x in vectors[0]))]
+	pLen.append(np.sqrt(sum(x**2 for x in vectors[1])))
+	maxLatticeSpacing = max(pLen)
+
+	dataSum = 0
+	aveRadius = 0
+
+	for i,cluster in enumerate(clusters):
+		peak = peaks[i]
+		(x,y) = peak
+		if x+maxLatticeSpacing/2 > size_x or x-maxLatticeSpacing/2 < 0 or y+maxLatticeSpacing/2 > size_y or y-maxLatticeSpacing/2 < 0:
+			continue
+		radius,clusterData = findRadius(cluster, peak)
+		aveRadius += clusterData*radius
+		dataSum += clusterData
+
+	aveRadius /= dataSum
+
+	return aveRadius
+
 def main():
 	filename = "CDW_GonTaS2"
 	data = np.loadtxt(filename+".txt")
@@ -247,9 +282,21 @@ def main():
 	# Identify primitive vectors
 	vectors = findLatticeVectors(peaks)
 
+	radius = findAveRadius(clusters, peaks, vectors)
+
 	# Show primitive vectors off of every peak
 	for peak in peaks:
 		(x,y) = peak
+
+		if x+2*radius > size_x or x-2*radius < 0 or y+2*radius > size_y or y-2*radius < 0:
+			continue
+
+		# Mark peaks
+		pt = Circle(Point(x,y),5)
+		pt.setFill(color_rgb(128,0,128))
+		pt.setOutline(color_rgb(128,0,128))
+		pt.draw(win)
+
 		(dx1,dy1) = vectors[0]
 		(dx2,dy2) = vectors[1]
 		ln1 = Line(Point(x,y),Point(x+dx1,y+dy1))
