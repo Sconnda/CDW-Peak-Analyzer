@@ -41,19 +41,19 @@ def createDataImage(filename,data):
 	winGen.postscript(file=filename+".eps",colormode="gray")
 	winGen.close()
 	img = NewImage.open(filename+".eps")
-	img.save(filename+".png","png")
+	img.save(filename+".gif","gif")
 
 # Show raw data as image backdrop
 def setBackground(filename, data):
 
 	# True if image does not exist
-	noImage = not path.exists(filename+".png")
+	noImage = not path.exists(filename+".gif")
 
 	if noImage:
 		createDataImage(filename, data)
 
 	# Find image file
-	img = Image(Point(size_x/2,size_y/2), filename+".png")
+	img = Image(Point(size_x/2,size_y/2), filename+".gif")
 	return img
 
 # Identify the points corresponding to a single cluster by finding neighboring points that exceed the threshold value
