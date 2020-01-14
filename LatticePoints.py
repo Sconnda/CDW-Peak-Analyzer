@@ -12,6 +12,7 @@ from PIL import Image as NewImage
 # Declaring global variables_____________________
 # Maximum value in data
 max_point = 0
+min_point = 0
 # Threshold value for considering a data point part of a cluster around any lattice point (rather than the space between clusters)
 threshold = 0
 # Window and size of window
@@ -27,14 +28,21 @@ def createDataImage(filename,data):
 	size_y = len(data)
 	winGen = GraphWin('Generating CDW Image...', size_x, size_y)
 	winGen.setBackground('black')
+	dataWhite = (max_point+min_point)/2
+	print(max_point)
+	print(min_point)
+	print(dataWhite)
 
 	# Draw data
 	for y in range(size_y):
 		for x in range(size_x):
 			pt = Point(x,y)
-			color = int(data[y][x]/max_point*255)
-			color = max(color,0)
-			pt.setOutline(color_rgb(color,color,color))
+			if data[y][x] > dataWhite:
+				color = int((data[y][x]-dataWhite)/(max_point-dataWhite)*255)
+				pt.setOutline(color_rgb(color,0,0))
+			else:
+				color = int((data[y][x]-dataWhite)/(min_point-dataWhite)*255)
+				pt.setOutline(color_rgb(0,0,color))
 			pt.draw(winGen)
 
 	# Save drawing as image file for data
@@ -48,6 +56,7 @@ def setBackground(filename, data):
 
 	# True if image does not exist
 	noImage = not path.exists(filename+".gif")
+	noImage = True
 
 	if noImage:
 		createDataImage(filename, data)
@@ -261,8 +270,9 @@ def main():
 	size_y = len(data)
 
 	# Determine data value corresponding to white
-	global max_point, threshold
+	global max_point, min_point, threshold
 	max_point = max(max(line) for line in data)
+	min_point = min(min(line) for line in data)
 	threshold = 0.2*max_point
 
 	global win
