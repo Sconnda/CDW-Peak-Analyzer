@@ -28,22 +28,16 @@ def createDataImage(filename,data):
 	size_y = len(data)
 	winGen = GraphWin('Generating CDW Image...', size_x, size_y)
 	winGen.setBackground('black')
-	dataWhite = (max_point+min_point)/2
-	print(max_point)
-	print(min_point)
-	print(dataWhite)
 
 	# Draw data
 	for y in range(size_y):
 		for x in range(size_x):
 			pt = Point(x,y)
-			if data[y][x] > dataWhite:
-				color = int((data[y][x]-dataWhite)/(max_point-dataWhite)*255)
-				pt.setOutline(color_rgb(color,0,0))
-			else:
-				color = int((data[y][x]-dataWhite)/(min_point-dataWhite)*255)
-				pt.setOutline(color_rgb(0,0,color))
+			color = int((data[y][x]-min_point)/(max_point-min_point)*255)
+			pt.setOutline(color_rgb(color,color,color))
 			pt.draw(winGen)
+
+	winGen.getMouse()
 
 	# Save drawing as image file for data
 	winGen.postscript(file=filename+".eps",colormode="gray")
@@ -56,7 +50,6 @@ def setBackground(filename, data):
 
 	# True if image does not exist
 	noImage = not path.exists(filename+".gif")
-	noImage = True
 
 	if noImage:
 		createDataImage(filename, data)
@@ -190,12 +183,18 @@ def findLatticeVectors(peaks):
 
 	while len(vectors2) > 0:
 		vec = vectors2.pop(0)
+		if vec[1] < 0:
+			(x,y) = vec
+			vec = (-x,-y)
 		cluster = [vec]
 		vListLen = len(vectors2)
 
 		for j in range(vListLen):
 			i = vListLen-1-j
 			vec2 = vectors[i]
+			if vec2[1] < 0:
+				(x,y) = vec2
+				vec2 = (-x,-y)
 			if vectorsSimilar(vec,vec2):
 				cluster.append(vec2)
 				vectors2.pop(i)
@@ -273,7 +272,7 @@ def main():
 	global max_point, min_point, threshold
 	max_point = max(max(line) for line in data)
 	min_point = min(min(line) for line in data)
-	threshold = 0.2*max_point
+	threshold = 0.6*(max_point-min_point)+min_point
 
 	global win
 	win = GraphWin('CDW Data', size_x, size_y)
