@@ -1,27 +1,32 @@
 import os
 from os import path
 
-# For ease of debugging
-import time
-
 import numpy as np
+import matplotlib.pyplot as plt
+import csv
 
 from graphics import *
 from PIL import Image as NewImage
 
 # Declaring global variables_____________________
+filename = "CDW_Data"
 # Maximum value in data
 max_point = 0
 min_point = 0
 # Threshold value for considering a data point part of a cluster around any lattice point (rather than the space between clusters)
 threshold = 0
+# Cluster radius, and maximum magnitude of all lattice vectors
+averageRadius = 0
+maxLatticeSpacing = 0
+# Number of bins and cutoff radius for radial correlation function g(r)
+bins, cutoff = 50,5
 # Window and size of window
 win = 0
 size_x = 512
 size_y = 512
 
 # Generate an image file for the data
-def createDataImage(filename,data):
+def createDataImage(data):
 
 	# Create window for drawing
 	size_x = len(data[0])
@@ -46,13 +51,13 @@ def createDataImage(filename,data):
 	img.save(filename+".gif","gif")
 
 # Show raw data as image backdrop
-def setBackground(filename, data):
+def setBackground(data):
 
 	# True if image does not exist
 	noImage = not path.exists(filename+".gif")
 
 	if noImage:
-		createDataImage(filename, data)
+		createDataImage(data)
 
 	# Find image file
 	img = Image(Point(size_x/2,size_y/2), filename+".gif")
@@ -238,11 +243,7 @@ def findRadius(cluster, peak):
 
 	return radius,dataSum
 
-def findAveRadius(clusters,peaks,vectors):
-	pLen = [np.sqrt(sum(x**2 for x in vectors[0]))]
-	pLen.append(np.sqrt(sum(x**2 for x in vectors[1])))
-	maxLatticeSpacing = max(pLen)
-
+def findAveRadius(clusters,peaks):
 	dataSum = 0
 	aveRadius = 0
 
@@ -259,7 +260,54 @@ def findAveRadius(clusters,peaks,vectors):
 
 	return aveRadius
 
+def RDF(peaks,bins,cutoff):
+	distances = []
+
+	for peak in peaks:
+		for peak2 in peaks:
+			if peak != peak2:
+				(x,y) = peak
+				(x2,y2) = peak2
+				distance = np.sqrt((x2-x)**2+(y2-y)**2)/maxLatticeSpacing
+				if distance < cutoff:
+					distances.append(distance)
+
+	gR = [0 for i in range(bins)]
+	N = len(peaks)
+	binWidth = cutoff/bins
+	for dist in distances:
+		index = int(bins*dist/cutoff)
+		a = np.floor(dist/binWidth)*binWidth
+		b = a+binWidth
+		weight = 1/(np.pi*(b**2-a**2))/N
+		gR[index] += weight
+
+	return gR
+
+def storeRDF(gR):
+	# Save RDF plot as an image
+	plt.plot([cutoff/bins*i for i in range(bins)],gR)
+	plt.title("Radial Distribution Function")
+	plt.xlabel("r")
+	plt.ylabel("g(r)")
+	plt.savefig(filename+"_RDF.png")
+	# Store RDF as a csv file
+	data = [cutoff/bins*i for i in range(bins)],gR
+	with open(filename+"_RDF.csv", 'w',newline='') as f:
+		wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+		wr.writerow(zip(*data))
+
+	img = NewImage.open(filename+"_RDF.png")
+	width,height = img.size
+
+	gRWin = GraphWin('g(r)', width, height)
+	gRPlot = Image(Point(width/2,height/2), filename+"_RDF.png")
+	gRPlot.draw(gRWin)
+	gRWin.getMouse()
+	gRWin.close()
+
 def main():
+	global filename
 	filename = "CDW_GonTaS2"
 	data = np.loadtxt(filename+".txt")
 
@@ -279,7 +327,7 @@ def main():
 	win.setBackground('black')
 
 	# Show CDW images
-	bg = setBackground(filename, data)
+	bg = setBackground(data)
 	bg.draw(win)
 
 	# Identify all clusters around lattice points
@@ -290,15 +338,27 @@ def main():
 
 	# Identify primitive vectors
 	vectors = findLatticeVectors(peaks)
+	global maxLatticeSpacing
+	pLen = [np.sqrt(sum(x**2 for x in vectors[0]))]
+	pLen.append(np.sqrt(sum(x**2 for x in vectors[1])))
+	maxLatticeSpacing = max(pLen)
 
-	radius = findAveRadius(clusters, peaks, vectors)
+	# Find approximate radius of each cluster
+	global averageRadius
+	averageRadius = findAveRadius(clusters, peaks)
 
-	# Show primitive vectors off of every peak
-	for peak in peaks:
+	# Remove peaks too close to the edge
+	peaks2 = []
+	clusters2 = []
+
+	for i,peak in enumerate(peaks):
 		(x,y) = peak
 
-		if x+2*radius > size_x or x-2*radius < 0 or y+2*radius > size_y or y-2*radius < 0:
+		if x+2*averageRadius > size_x or x-2*averageRadius < 0 or y+2*averageRadius > size_y or y-2*averageRadius < 0:
 			continue
+
+		peaks2.append(peak)
+		clusters2.append(clusters[i])
 
 		# Mark peaks
 		pt = Circle(Point(x,y),5)
@@ -306,6 +366,7 @@ def main():
 		pt.setOutline(color_rgb(128,0,128))
 		pt.draw(win)
 
+		# Show primitive vectors off of every peak
 		(dx1,dy1) = vectors[0]
 		(dx2,dy2) = vectors[1]
 		ln1 = Line(Point(x,y),Point(x+dx1,y+dy1))
@@ -318,5 +379,8 @@ def main():
 	# Close window only after mouse click in window
 	win.getMouse()
 	win.close()
+
+	gR = RDF(peaks2,bins,cutoff)
+	storeRDF(gR)
 
 main()
