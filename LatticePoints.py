@@ -19,7 +19,7 @@ threshold = 0
 averageRadius = 0
 maxLatticeSpacing = 0
 # Number of bins and cutoff radius for radial correlation function g(r)
-bins, cutoff = 50,5
+bins, cutoff = 30,10
 # Window and size of window
 win = 0
 size_x = 512
@@ -308,7 +308,7 @@ def storeRDF(gR):
 
 def main():
 	global filename
-	filename = "CDW_GonTaS2"
+	filename = "TestCDW_512px"
 	data = np.loadtxt(filename+".txt")
 
 	# Identify width and height of data array
