@@ -1,5 +1,4 @@
 import os
-from os import path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,7 +18,7 @@ threshold = 0
 averageRadius = 0
 maxLatticeSpacing = 0
 # Number of bins and cutoff radius for radial correlation function g(r)
-bins, cutoff = 30,10
+bins, cutoff = 15,5
 # Window and size of window
 win = 0
 size_x = 512
@@ -54,7 +53,7 @@ def createDataImage(data):
 def setBackground(data):
 
 	# True if image does not exist
-	noImage = not path.exists(filename+".gif")
+	noImage = not os.path.exists(filename+".gif")
 
 	if noImage:
 		createDataImage(data)
@@ -129,7 +128,7 @@ def findPeaks(clusters):
 		peaks.append((xCM,yCM))
 
 		# Mark peaks
-		pt = Circle(Point(xCM,yCM),3)
+		pt = Circle(Point(xCM,yCM),1)
 		pt.setFill(color_rgb(255,0,0))
 		pt.setOutline(color_rgb(255,0,0))
 		pt.draw(win)
@@ -308,7 +307,11 @@ def storeRDF(gR):
 
 def main():
 	global filename
-	filename = "TestCDW_512px"
+	if len(sys.argv) > 1:
+		filename = sys.argv[1]
+	if not os.path.isdir(filename):
+		filename = "TestCDW_512px"
+	os.chdir(filename)
 	data = np.loadtxt(filename+".txt")
 
 	# Identify width and height of data array
@@ -361,7 +364,7 @@ def main():
 		clusters2.append(clusters[i])
 
 		# Mark peaks
-		pt = Circle(Point(x,y),5)
+		pt = Circle(Point(x,y),1)
 		pt.setFill(color_rgb(128,0,128))
 		pt.setOutline(color_rgb(128,0,128))
 		pt.draw(win)
