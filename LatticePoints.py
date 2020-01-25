@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -389,6 +390,11 @@ def main():
 	# Close window only after mouse click in window
 	win.getMouse()
 	win.close()
+
+	with open(filename+"_Peaks.csv", 'w',newline='') as f:
+		wr = csv.writer(f)
+		for peak in peaks2:
+			wr.writerow(peak)
 
 	gR = RDF(peaks2,bins,cutoff)
 	storeRDF(gR)
