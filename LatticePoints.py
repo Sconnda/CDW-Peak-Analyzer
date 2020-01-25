@@ -23,6 +23,7 @@ bins, cutoff = 15,5
 win = 0
 size_x = 512
 size_y = 512
+scale = 1
 
 # Generate an image file for the data
 def createDataImage(data):
@@ -47,6 +48,7 @@ def createDataImage(data):
 	winGen.postscript(file=filename+".eps",colormode="gray")
 	winGen.close()
 	img = NewImage.open(filename+".eps")
+	img = img.resize((size_x,size_y),NewImage.ANTIALIAS)
 	img.save(filename+".gif","gif")
 
 # Show raw data as image backdrop
@@ -59,7 +61,10 @@ def setBackground(data):
 		createDataImage(data)
 
 	# Find image file
-	img = Image(Point(size_x/2,size_y/2), filename+".gif")
+	img = NewImage.open(filename+".gif")
+	img = img.resize((int(scale*size_x),int(scale*size_y)),NewImage.ANTIALIAS)
+	img.save(filename+"_Scaled.gif","gif")
+	img = Image(Point(int(scale*size_x/2),int(scale*size_y/2)), filename+"_Scaled.gif")
 	return img
 
 # Identify the points corresponding to a single cluster by finding neighboring points that exceed the threshold value
@@ -80,7 +85,7 @@ def findNeighbors(data,x0,y0):
 		data[y][x] = threshold-1
 
 		# Mark cluster
-		# pt = Point(x,y)
+		# pt = Point(int(scale*x),int(scale*y))
 		# pt.setOutline(color_rgb(255,0,0))
 		# pt.draw(win)
 
@@ -128,7 +133,7 @@ def findPeaks(clusters):
 		peaks.append((xCM,yCM))
 
 		# Mark peaks
-		pt = Circle(Point(xCM,yCM),1)
+		pt = Circle(Point(int(scale*xCM),int(scale*yCM)),3)
 		pt.setFill(color_rgb(255,0,0))
 		pt.setOutline(color_rgb(255,0,0))
 		pt.draw(win)
@@ -176,7 +181,7 @@ def findLatticeVectors(peaks):
 			(x0,y0) = peak
 			(dx,dy) = vec
 			(x,y) = (x0+dx,y0+dy)
-			# ln = Line(Point(x0,y0), Point(x,y))
+			# ln = Line(Point(int(scale*x0),int(scale*y0)), Point(int(scale*x),int(scale*y)))
 			# ln.setOutline(color_rgb(0,255,0))
 			# ln.draw(win)
 		vectors += peakVectors
@@ -306,9 +311,11 @@ def storeRDF(gR):
 	gRWin.close()
 
 def main():
-	global filename
+	global filename, scale
 	if len(sys.argv) > 1:
 		filename = sys.argv[1]
+	if len(sys.argv) > 2:
+		scale = float(sys.argv[2])
 	if not os.path.isdir(filename):
 		filename = "TestCDW_512px"
 	os.chdir(filename)
@@ -326,7 +333,7 @@ def main():
 	threshold = 0.6*(max_point-min_point)+min_point
 
 	global win
-	win = GraphWin('CDW Data', size_x, size_y)
+	win = GraphWin('CDW Data', int(size_x*scale), int(size_y*scale))
 	win.setBackground('black')
 
 	# Show CDW images
@@ -364,7 +371,7 @@ def main():
 		clusters2.append(clusters[i])
 
 		# Mark peaks
-		pt = Circle(Point(x,y),1)
+		pt = Circle(Point(int(scale*x),int(scale*y)),5)
 		pt.setFill(color_rgb(128,0,128))
 		pt.setOutline(color_rgb(128,0,128))
 		pt.draw(win)
@@ -372,10 +379,10 @@ def main():
 		# Show primitive vectors off of every peak
 		(dx1,dy1) = vectors[0]
 		(dx2,dy2) = vectors[1]
-		ln1 = Line(Point(x,y),Point(x+dx1,y+dy1))
+		ln1 = Line(Point(int(scale*x),int(scale*y)),Point(int(scale*(x+dx1)),int(scale*(y+dy1))))
 		ln1.setOutline(color_rgb(0,0,255))
 		ln1.draw(win)
-		ln2 = Line(Point(x,y),Point(x+dx2,y+dy2))
+		ln2 = Line(Point(int(scale*x),int(scale*y)),Point(int(scale*(x+dx2)),int(scale*(y+dy2))))
 		ln2.setOutline(color_rgb(0,0,255))
 		ln2.draw(win)
 
