@@ -50,11 +50,11 @@ def findJMatrix(peaks):
 
 	return jMatrix
 
-def voronoi(jMatrix):
+def voronoi(jMatrix,num_peaks):
 	img = NewImage.new("RGB", (size_x, size_y))
 	putpixel = img.putpixel
 	colors = []
-	for i in range(len(peaks)):
+	for i in range(num_peaks):
 		colors.append((0,random.randrange(255),random.randrange(255)))
 	for y in range(size_y):
 		for x in range(size_x):
@@ -63,11 +63,11 @@ def voronoi(jMatrix):
 
 	return img
 
-def voronoiImage(jMatrix):
+def voronoiImage(jMatrix,num_peaks):
 	noImage = not os.path.exists(filename+"_Voronoi.gif")
 
 	if noImage:
-		img = voronoi(peaks)
+		img = voronoi(jMatrix,num_peaks)
 		img.save(filename+"_Voronoi.gif",'gif')	
 
 	img = NewImage.open(filename+"_Voronoi.gif")
@@ -81,7 +81,7 @@ def triangulation(jMatrix,num_peaks):
 	for y in range(size_y):
 		for x in range(size_x):
 			j = int(jMatrix[y][x])
-			for dy in [-1,0,1]:
+			for dx,dy in [(-1,0),(1,0),(0,-1),(0,1)]:
 				for dx in [-1,0,1]:
 					if x+dx < 0 or x+dx >= size_x or y+dy < 0 or y+dy >= size_y:
 						continue
@@ -114,16 +114,17 @@ def main():
 			x = float(x)
 			y = float(y)
 			peaks.append([x,y])
+	num_peaks = len(peaks)
 
 	global win
-	win = GraphWin('CDW Data', int(size_x*scale), int(size_y*scale))
 	jMatrix = findJMatrix(peaks)
-	img = voronoiImage(jMatrix)
+	win = GraphWin('CDW Data', int(size_x*scale), int(size_y*scale))
+	img = voronoiImage(jMatrix, num_peaks)
 	img.draw(win)
 
 	for peak in peaks:
 		x,y = peak
-		pt = Circle(Point(x,y),scale*2)
+		pt = Circle(Point(scale*x,scale*y),3)
 		pt.setFill(color_rgb(255,0,0))
 		pt.setOutline(color_rgb(255,0,0))
 		pt.draw(win)
@@ -136,7 +137,7 @@ def main():
 		if num_bonds != 6:
 			defects.append(peak)
 		for i,bond in enumerate(bondMatrix[j]):
-			if bond == 1:
+			if i > j and bond == 1:
 				x2,y2 = peaks[i]
 				ln = Line(Point(scale*x,scale*y),Point(scale*x2,scale*y2))
 				ln.setOutline(color_rgb(255,255,255))
@@ -144,7 +145,7 @@ def main():
 
 	for defect in defects:
 		x,y = defect
-		pt = Circle(Point(x,y),scale*3)
+		pt = Circle(Point(scale*x,scale*y),5)
 		pt.setFill(color_rgb(255,255,0))
 		pt.setOutline(color_rgb(255,255,0))
 		pt.draw(win)		
