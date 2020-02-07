@@ -353,6 +353,7 @@ def main():
 	pLen = [np.sqrt(sum(x**2 for x in vectors[0]))]
 	pLen.append(np.sqrt(sum(x**2 for x in vectors[1])))
 	maxLatticeSpacing = max(pLen)
+	print(maxLatticeSpacing)
 
 	# Find approximate radius of each cluster
 	global averageRadius
