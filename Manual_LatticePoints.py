@@ -105,7 +105,7 @@ def main():
 	while searching:
 		pt = win.getMouse()
 
-		mark = Circle(pt,1)
+		mark = Circle(pt,3)
 		mark.setFill(color_rgb(255,0,0))
 		mark.setOutline(color_rgb(255,0,0))
 		mark.draw(win)

@@ -23,8 +23,10 @@ def findJMatrix(peaks):
 	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
 
 	if noJMatrix:
+		print("Finding j-Matrix...")
 		num_peaks = len(peaks)
 		jMatrix = [[0 for i in range(size_x)] for j in range(size_y)]
+		pDone = 0
 		for y in range(size_y):
 			for x in range(size_x):
 				dmin = math.hypot(size_x-1, size_y-1)
@@ -36,6 +38,9 @@ def findJMatrix(peaks):
 						dmin = d
 						j = i
 				jMatrix[y][x] = j
+			if int(100*(y+1)/size_y) > pDone:
+				pDone = int(100*(y+1)/size_y)
+				print(str(pDone)+"%")
 
 		with open(filename+"_jMatrix.csv", 'w',newline='') as f:
 			wr = csv.writer(f)

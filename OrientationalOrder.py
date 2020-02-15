@@ -67,10 +67,12 @@ def voronoi(jMatrix,num_peaks):
 	return img
 
 def background():
-	noImage = not os.path.exists(filename+"_Voronoi.gif")
+	noImage = not os.path.exists(filename+"_Scaled.gif")
 
 	if noImage:
 		img = NewImage.new('RGB',(size_x,size_y),(255,255,255))
+		img.save(filename+"_Scaled.gif","gif")
+		img = Image(Point(int(scale*size_x/2),int(scale*size_y/2)), filename+"_Scaled.gif")
 		return img
 
 	img = NewImage.open(filename+".gif")
@@ -140,6 +142,14 @@ def orientationalOrder(peaks,edges,bondMatrix,latticeSpacing):
 		for j,peak2 in enumerate(peaks):
 			if peak == peak2:
 				continue
+
+			isEdge = False
+			for k in edges:
+				if j == k:
+					isEdge = True
+			if isEdge:
+				continue
+
 			(x2,y2) = peak2
 			distance = np.sqrt((x2-x)**2+(y2-y)**2)/latticeSpacing
 			if distance >= cutoff or distance < 0.5:
@@ -163,14 +173,14 @@ def orientationalOrder(peaks,edges,bondMatrix,latticeSpacing):
 def storeG6(G6_r):
 	# Save G6(r) plot as an image
 	maxLen = len(G6_r)
-	G6_r.insert(0,1)
-	plt.plot(range(maxLen+1),G6_r,'bo')
+	plt.plot([i+1 for i in range(maxLen)],G6_r,'bo')
+	plt.ylim((0, 1))
 	plt.title("Orientational Order Correlation Function")
 	plt.xlabel("r")
 	plt.ylabel("G6(r)")
 	plt.savefig(filename+"_G6.png")
 	# Store G6(r) as a csv file
-	data = range(maxLen+1),G6_r
+	data = [i+1 for i in range(maxLen)],G6_r
 	with open(filename+"_G6.csv", 'w',newline='') as f:
 		wr = csv.writer(f, quoting=csv.QUOTE_ALL)
 		wr.writerow(zip(*data))
@@ -229,41 +239,43 @@ def main():
 		num_bonds = sum(bondMatrix[j])
 		if num_bonds != 6:
 			defects.append(peak)
-		for i,bond in enumerate(bondMatrix[j]):
-			if i > j and bond == 1:
-				x2,y2 = peaks[i]
-				ln = Line(Point(scale*x,scale*y),Point(scale*x2,scale*y2))
-				ln.setOutline(color_rgb(255,255,255))
-				ln.draw(win)
+		# for i,bond in enumerate(bondMatrix[j]):
+		# 	if i > j and bond == 1:
+		# 		x2,y2 = peaks[i]
+		# 		ln = Line(Point(scale*x,scale*y),Point(scale*x2,scale*y2))
+		# 		ln.setOutline(color_rgb(255,255,255))
+		# 		ln.draw(win)
 
 	latticeSpacing = 0
 	total_bonds = 0
 	edges = []
 	for i,peak in enumerate(peaks):
-		bondAngles = []
+		# bondAngles = []
 		x,y = peak
 		for j,bonded in enumerate(bondMatrix[i]):
 			if bonded == 1:
 				x2,y2 = peaks[j]
-				angle = np.arctan2(y2-y,x2-x)
-				bondAngles.append(angle)
+		# 		angle = np.arctan2(y2-y,x2-x)
+		# 		bondAngles.append(angle)
 				total_bonds += 1
 				latticeSpacing += np.sqrt((x2-x)**2 + (y2-y)**2)
-		bondAngles = sorted(bondAngles)
-		maxAdjAngle = 0
-		for j in range(len(bondAngles)):
-			angle1 = bondAngles[j]
-			if j < len(bondAngles)-1:
-				angle2 = bondAngles[j+1]
-			else:
-				angle2 = bondAngles[0]+2*np.pi
-			adjAngle = angle2-angle1
-			if adjAngle > maxAdjAngle:
-				maxAdjAngle = adjAngle
-		if maxAdjAngle > 0.6*np.pi:
-			edges.append(i)
-		# elif y > size_y/3:
+		# bondAngles = sorted(bondAngles)
+		# maxAdjAngle = 0
+		# for j in range(len(bondAngles)):
+		# 	angle1 = bondAngles[j]
+		# 	if j < len(bondAngles)-1:
+		# 		angle2 = bondAngles[j+1]
+		# 	else:
+		# 		angle2 = bondAngles[0]+2*np.pi
+		# 	adjAngle = angle2-angle1
+		# 	if adjAngle > maxAdjAngle:
+		# 		maxAdjAngle = adjAngle
+		# if maxAdjAngle > 0.6*np.pi:
 		# 	edges.append(i)
+		if y < 0.05*size_y or y > 0.95*size_y:
+			edges.append(i)
+		elif x < 0.05*size_x or x > 0.95*size_x:
+			edges.append(i)
 
 	latticeSpacing /= total_bonds
 
@@ -282,16 +294,20 @@ def main():
 		pt.setOutline(color_rgb(0,255,0))
 		pt.draw(win)
 
+
+	G6_r = orientationalOrder(peaks,edges,bondMatrix,latticeSpacing)
 	win.getMouse()
 	win.close()
 
-	G6_r = orientationalOrder(peaks,edges,bondMatrix,latticeSpacing)
 	G6_r_Clipped = []
-	for x in G6_r[0]:
-		if x != 0:
-			G6_r_Clipped.append(x)
+	G6_0 = 0
+	for i in range(20):
+		G6_i = G6_r[0][i]
+		if i == 0:
+			G6_2 = G6_r[0][1]
+			G6_0 = 2*G6_i-G6_2
+		if G6_i != 0:
+			G6_r_Clipped.append(G6_i/G6_0)
 	storeG6(G6_r_Clipped)
-
-	print(G6_r_Clipped)
 
 main()
