@@ -12,6 +12,7 @@ from PIL import Image as NewImage
 filename = "CDW_Data"
 # Peak searching variables
 searching = True
+thresholdedImage = True
 peaks = []
 # Window and size of window
 win = 0
@@ -99,6 +100,23 @@ def main():
 	# Show CDW images
 	bg = setBackground(data)
 	bg.draw(win)
+
+	global peaks
+	if os.path.exists(filename+"_Peaks.csv"):
+		with open(filename+"_Peaks.csv",newline='') as file:
+			reader = csv.reader(file,delimiter=',',quotechar='|')
+			for row in reader:
+				x,y = row
+				x = float(x)
+				y = float(y)
+				peaks.append([x,y])
+	for peak in peaks:
+		x,y = peak
+		pt = Point(scale*x,scale*y)
+		mark = Circle(pt,3)
+		mark.setFill(color_rgb(255,0,0))
+		mark.setOutline(color_rgb(255,0,0))
+		mark.draw(win)		
 
 	keyboard.add_hotkey('s',lambda: save())
 	keyboard.add_hotkey('z',lambda: undo())

@@ -183,7 +183,7 @@ def storeG6(G6_r):
 	data = [i+1 for i in range(maxLen)],G6_r
 	with open(filename+"_G6.csv", 'w',newline='') as f:
 		wr = csv.writer(f, quoting=csv.QUOTE_ALL)
-		wr.writerow(zip(*data))
+		wr.writerow(G6_r)
 
 	img = NewImage.open(filename+"_G6.png")
 	width,height = img.size
@@ -299,15 +299,16 @@ def main():
 	win.getMouse()
 	win.close()
 
-	G6_r_Clipped = []
-	G6_0 = 0
-	for i in range(20):
-		G6_i = G6_r[0][i]
-		if i == 0:
-			G6_2 = G6_r[0][1]
-			G6_0 = 2*G6_i-G6_2
-		if G6_i != 0:
-			G6_r_Clipped.append(G6_i/G6_0)
+	# G6_r_Clipped = []
+	# G6_0 = 0
+	# for i in range(20):
+	# 	G6_i = G6_r[0][i]
+	# 	if i == 0:
+	# 		G6_2 = G6_r[0][1]
+	# 		G6_0 = 2*G6_i-G6_2
+	# 	if G6_i != 0:
+	# 		G6_r_Clipped.append(G6_i/G6_0)
+	G6_r_Clipped = G6_r[0][0:20]
 	storeG6(G6_r_Clipped)
 
 main()
