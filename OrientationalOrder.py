@@ -67,10 +67,10 @@ def voronoi(jMatrix,num_peaks):
 	return img
 
 def background():
-	noImage = not os.path.exists(filename+"_Scaled.gif")
+	noImage = not os.path.exists(filename+".gif")
 
 	if noImage:
-		img = NewImage.new('RGB',(size_x,size_y),(255,255,255))
+		img = NewImage.new('RGB',(int(size_x*scale),int(size_y*scale)),(255,255,255))
 		img.save(filename+"_Scaled.gif","gif")
 		img = Image(Point(int(scale*size_x/2),int(scale*size_y/2)), filename+"_Scaled.gif")
 		return img
@@ -123,7 +123,7 @@ def orientationalOrder(peaks,edges,bondMatrix,latticeSpacing):
 	N_r = [0 for i in range(cutoff)]
 	percentDone = 0
 	for i,peak in enumerate(peaks):
-		pDone = 10*int(10*float(i)/len(peaks))
+		pDone = int(100*float(i)/len(peaks))
 		if pDone > percentDone:
 			percentDone = pDone
 			print(str(pDone)+"% Done")

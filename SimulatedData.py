@@ -86,7 +86,7 @@ def click_event(event, x, y, flags, param):
 
 phaseShift = np.zeros([width,height,3],float)
 ave = [0,0,0]
-randomWalk = 0.04*lattice_spacing
+randomWalk = 0.035*lattice_spacing
 for j in range(height):
 	for i in range(width):
 		iRev = width-1-i
@@ -156,86 +156,7 @@ t = 0
 img = np.zeros([width,height,3],np.uint8)
 
 while True:
-	showImage = True
-	if (t % period == 0):
-		img = np.zeros([width,height,3],np.uint8)
-		# for i in range(max(0,len(peaks)-20),len(peaks)):
-		# 	peak = peaks[i]
-		# 	x,y = peak
-		# 	if len(neighbors[i]) == 0:
-		# 		theta_exp = 2*np.pi/maxBonds[i]
-		# 		for j in range(maxBonds[i]):
-		# 			theta = j*theta_exp
-		# 			n = 6
-		# 			defect = np.random.sample()
-		# 			if (defect < defectDensity):
-		# 				n += int(2*round(np.random.sample())-1)
-		# 			createPoint(x+lattice_spacing*np.cos(theta),y+lattice_spacing*np.sin(theta),n)
-		# 		firstUnbonded = i
-		# 		break
-		# 	elif not peakClosed[i]:
-		# 		angles = []
-		# 		for neighbor in neighbors[i]:
-		# 			x2,y2 = peaks[neighbor]
-		# 			theta = np.arctan2(y2-y,x2-x)
-		# 			angles.append(theta)
-		# 		angles.sort()
-		# 		dAngles = []
-		# 		for j in range(len(angles)):
-		# 			if j == len(angles)-1:
-		# 				dAngles.append(angles[0]+2*np.pi-angles[j])
-		# 			else:
-		# 				dAngles.append(angles[j+1]-angles[j])
-		# 		theta_exp = 2*np.pi/maxBonds[i]
-		# 		for j,dAngle in enumerate(dAngles):
-		# 			nBonds = int(round(dAngle/theta_exp))-1
-		# 			midPoint = angles[j]+dAngle/2
-		# 			bondsCreated = 0
-		# 			for k in range(nBonds):
-		# 				theta = midPoint+(k-(nBonds-1)/2)*theta_exp
-		# 				n = 6
-		# 				defect = np.random.sample()
-		# 				if (defect < defectDensity):
-		# 					n += int(2*round(np.random.sample())-1)
-		# 				xp = x+lattice_spacing*np.cos(theta)
-		# 				yp = y+lattice_spacing*np.sin(theta)
-		# 				overlay = -1
-		# 				for l,peak2 in enumerate(peaks):
-		# 					if i == l:
-		# 						continue
-		# 					x3,y3 = peak2
-		# 					dist = ((xp-x3)**2+(yp-y3)**2)**0.5
-		# 					if dist < 0.5*lattice_spacing:
-		# 						overlay = l
-		# 				if overlay == -1:
-		# 					createPoint(xp,yp,n)
-		# 					bondsCreated += 1
-		# 				else:
-		# 					if not (overlay in neighbors[i]):
-		# 						neighbors[i].append(overlay)
-		# 						if len(neighbors[i]) > maxBonds[i]:
-		# 							maxBonds[i] = len(neighbors[i])
-		# 					if not (i in neighbors[overlay]):
-		# 						neighbors[overlay].append(i)
-		# 						if len(neighbors[overlay]) > maxBonds[overlay]:
-		# 							maxBonds[overlay] = len(neighbors[overlay])
-
-		# 			if bondsCreated == 0:
-		# 				peakClosed[i] = True
-		# 				# maxBonds[i] = len(neighbors[i])
-		# 		firstUnbonded = i
-		# 		break
-		# # theta = 2*np.pi*np.random.sample()
-		# # x = 256*(1+np.cos(theta))
-		# # y = 256*(1+np.sin(theta))
-		# # n = 6
-		# # if (t % (period*defect_period) == 0):
-		# # 	n += int(2*round(np.random.sample()-1))
-		# # peak = createPoint(x,y,n)
-		# # dist = ((256-x)**2+(256-y)**2)**0.5
-		# # v_peaks[-1] = (pulse*(256-x)/dist,pulse*(256-y)/dist)
-	elif showImage:
-		img = np.zeros([width,height,3],np.uint8)
+	img = np.zeros([width,height,3],np.uint8)
 
 	for i in range(len(peaks)):
 		peak = peaks[i]
@@ -275,10 +196,7 @@ while True:
 				ay += k1*(dist-lattice_spacing)*(y2-y)/dist
 				ax -= b*vx
 				ay -= b*vy
-			# elif len(neighbors[j]) < maxBonds[j] and len(neighbors[i]) < maxBonds[i]:
-			# 	dist = ((x-x2)**2+(y-y2)**2)**0.5
-			# 	ax += -k2*(x2-x)/(dist**2)
-			# 	ay += -k2*(y2-y)/(dist**2)
+
 		a_peaks[i] = (ax,ay)
 
 	for i in range(len(peaks)):
@@ -305,23 +223,21 @@ while True:
 
 	for i,peak in enumerate(peaks):
 		x,y = peak
-		if (t % period == 0) or showImage:
-			if i == selected:
-				img = cv.circle(img, (int(x),int(y)),3,(0,0,255),-1)
-			elif i == firstUnbonded:
-				img = cv.circle(img, (int(x),int(y)),3,(0,255,0),-1)
-			elif maxBonds[i] != 6:
-				img = cv.circle(img, (int(x),int(y)),3,(0,255,255),-1)
-			else:
-				img = cv.circle(img, (int(x),int(y)),3,(255,255,255),-1)
+		if i == selected:
+			img = cv.circle(img, (int(x),int(y)),3,(0,0,255),-1)
+		elif i == firstUnbonded:
+			img = cv.circle(img, (int(x),int(y)),3,(0,255,0),-1)
+		elif maxBonds[i] != 6:
+			img = cv.circle(img, (int(x),int(y)),3,(0,255,255),-1)
+		else:
+			img = cv.circle(img, (int(x),int(y)),3,(255,255,255),-1)
 
 		for j, peak2 in enumerate(peaks):
 			if j == i:
 				continue
 			x2,y2 = peak2
 			if (j in neighbors[i]):
-				if (t % period == 0) or showImage:
-					img = cv.line(img, (int(x),int(y)),(int(x2),int(y2)),(255,255,255),1)				
+				img = cv.line(img, (int(x),int(y)),(int(x2),int(y2)),(255,255,255),1)				
 				continue
 			dist = ((x-x2)**2+(y-y2)**2)**0.5
 			commonNeighbors = False
@@ -366,8 +282,6 @@ while True:
 
 	cv.imshow('frame',img)
 	cv.setMouseCallback('frame',click_event)
-
-	showImage = False
 
 	key = cv.waitKey(1) & 0xFF
 	if key == ord('p'):

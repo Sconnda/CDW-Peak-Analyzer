@@ -9,6 +9,9 @@ import csv
 from graphics import *
 from PIL import Image as NewImage
 
+from modules.bondFunctions import findJMatrix
+from modules.bondFunctions import triangulation
+
 # Declaring global variables_____________________
 filename = "CDW_Data"
 # Window and size of window
@@ -19,41 +22,19 @@ scale = 1
 # Mode: draw Voronoi diagram or draw CDW image
 drawVoronoi = True
 
-def findJMatrix(peaks):
+def retJMatrix(peaks,size_x,size_y):
 	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
 
 	if noJMatrix:
-		print("Finding j-Matrix...")
-		num_peaks = len(peaks)
-		jMatrix = [[0 for i in range(size_x)] for j in range(size_y)]
-		pDone = 0
-		for y in range(size_y):
-			for x in range(size_x):
-				dmin = math.hypot(size_x-1, size_y-1)
-				j = -1
-				for i in range(num_peaks):
-					xPeak,yPeak = peaks[i]
-					d = math.hypot(xPeak-x, yPeak-y)
-					if d < dmin:
-						dmin = d
-						j = i
-				jMatrix[y][x] = j
-			if int(100*(y+1)/size_y) > pDone:
-				pDone = int(100*(y+1)/size_y)
-				print(str(pDone)+"%")
+		findJMatrix(filename,peaks,size_x,size_y)
 
-		with open(filename+"_jMatrix.csv", 'w',newline='') as f:
-			wr = csv.writer(f)
-			for row in jMatrix:
-				wr.writerow(row)
-	else:
-		jMatrix = []
-		with open(filename+"_jMatrix.csv",newline='') as file:
-			reader = csv.reader(file,delimiter=',',quotechar='|')
-			for row in reader:
-				for i,x in enumerate(row):
-					row[i] = float(x)
-				jMatrix.append(row)
+	jMatrix = []
+	with open(filename+"_jMatrix.csv",newline='') as file:
+		reader = csv.reader(file,delimiter=',',quotechar='|')
+		for row in reader:
+			for i,x in enumerate(row):
+				row[i] = float(x)
+			jMatrix.append(row)
 
 	return jMatrix
 
@@ -91,21 +72,6 @@ def voronoiImage(jMatrix,num_peaks):
 	img = Image(Point(int(scale*size_x/2),int(scale*size_y/2)), filename+"_Scaled.gif")
 	return img
 
-def triangulation(jMatrix,num_peaks):
-	bondMatrix = [[0 for i in range(num_peaks)] for j in range(num_peaks)]
-	for y in range(size_y):
-		for x in range(size_x):
-			j = int(jMatrix[y][x])
-			for dy in [-1,0,1]:
-				for dx in [-1,0,1]:
-					if x+dx < 0 or x+dx >= size_x or y+dy < 0 or y+dy >= size_y:
-						continue
-					i = int(jMatrix[y+dy][x+dx])
-					if i != j:
-						bondMatrix[j][i] = 1
-						bondMatrix[i][j] = 1
-	return bondMatrix
-
 def main():
 	global filename, scale, drawVoronoi
 	if len(sys.argv) > 1:
@@ -135,7 +101,7 @@ def main():
 	num_peaks = len(peaks)
 
 	global win
-	jMatrix = findJMatrix(peaks)
+	jMatrix = retJMatrix(peaks,size_x,size_y)
 	win = GraphWin('CDW Data', int(size_x*scale), int(size_y*scale))
 	img = voronoiImage(jMatrix, num_peaks)
 	img.draw(win)
@@ -148,7 +114,7 @@ def main():
 		pt.draw(win)
 
 	defects = []
-	bondMatrix = triangulation(jMatrix,len(peaks))
+	bondMatrix = triangulation(jMatrix,len(peaks),size_x,size_y)
 	for j,peak in enumerate(peaks):
 		x,y = peak
 		num_bonds = sum(bondMatrix[j])
