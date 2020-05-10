@@ -10,6 +10,9 @@ import csv
 from graphics import *
 from PIL import Image as NewImage
 
+from modules.bondFunctions import findJMatrix
+from modules.bondFunctions import triangulation
+
 # Declaring global variables_____________________
 filename = "CDW_Data"
 # Cutoff radius for orientational order correlation function G6(r)
@@ -20,36 +23,19 @@ size_x = 512
 size_y = 512
 scale = 1
 
-def findJMatrix(peaks):
+def retJMatrix(peaks,size_x,size_y):
 	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
 
 	if noJMatrix:
-		num_peaks = len(peaks)
-		jMatrix = [[0 for i in range(size_x)] for j in range(size_y)]
-		for y in range(size_y):
-			for x in range(size_x):
-				dmin = math.hypot(size_x-1, size_y-1)
-				j = -1
-				for i in range(num_peaks):
-					xPeak,yPeak = peaks[i]
-					d = math.hypot(xPeak-x, yPeak-y)
-					if d < dmin:
-						dmin = d
-						j = i
-				jMatrix[y][x] = j
+		findJMatrix(filename,peaks,size_x,size_y)
 
-		with open(filename+"_jMatrix.csv", 'w',newline='') as f:
-			wr = csv.writer(f)
-			for row in jMatrix:
-				wr.writerow(row)
-	else:
-		jMatrix = []
-		with open(filename+"_jMatrix.csv",newline='') as file:
-			reader = csv.reader(file,delimiter=',',quotechar='|')
-			for row in reader:
-				for i,x in enumerate(row):
-					row[i] = float(x)
-				jMatrix.append(row)
+	jMatrix = []
+	with open(filename+"_jMatrix.csv",newline='') as file:
+		reader = csv.reader(file,delimiter=',',quotechar='|')
+		for row in reader:
+			for i,x in enumerate(row):
+				row[i] = float(x)
+			jMatrix.append(row)
 
 	return jMatrix
 
@@ -80,21 +66,6 @@ def background():
 	img.save(filename+"_Scaled.gif","gif")
 	img = Image(Point(int(scale*size_x/2),int(scale*size_y/2)), filename+"_Scaled.gif")
 	return img
-
-def triangulation(jMatrix,num_peaks):
-	bondMatrix = [[0 for i in range(num_peaks)] for j in range(num_peaks)]
-	for y in range(size_y):
-		for x in range(size_x):
-			j = int(jMatrix[y][x])
-			for dy in [-1,0,1]:
-				for dx in [-1,0,1]:
-					if x+dx < 0 or x+dx >= size_x or y+dy < 0 or y+dy >= size_y:
-						continue
-					i = int(jMatrix[y+dy][x+dx])
-					if i != j:
-						bondMatrix[j][i] = 1
-						bondMatrix[i][j] = 1
-	return bondMatrix
 
 def psi6(peak,neighbors):
 	x,y = peak
@@ -171,8 +142,11 @@ def orientationalOrder(peaks,edges,bondMatrix,latticeSpacing):
 	return (G6_r_re,G6_r_im)
 
 def storeG6(G6_r):
-	# Save G6(r) plot as an image
 	maxLen = len(G6_r)
+	G6_r0 = 2*G6_r[0]-G6_r[1]
+	for i in range(maxLen):
+		G6_r[i] /= G6_r0
+	# Save G6(r) plot as an image
 	plt.plot([i+1 for i in range(maxLen)],G6_r,'bo')
 	plt.ylim((0, 1))
 	plt.title("Orientational Order Correlation Function")
@@ -180,10 +154,10 @@ def storeG6(G6_r):
 	plt.ylabel("G6(r)")
 	plt.savefig(filename+"_G6.png")
 	# Store G6(r) as a csv file
-	data = [i+1 for i in range(maxLen)],G6_r
 	with open(filename+"_G6.csv", 'w',newline='') as f:
 		wr = csv.writer(f, quoting=csv.QUOTE_ALL)
-		wr.writerow(G6_r)
+		for i in range(maxLen):
+			wr.writerow([i+1,G6_r[i]])
 
 	img = NewImage.open(filename+"_G6.png")
 	width,height = img.size
@@ -191,7 +165,7 @@ def storeG6(G6_r):
 	G6Win = GraphWin('G6(r)', width, height)
 	G6Plot = Image(Point(width/2,height/2), filename+"_G6.png")
 	G6Plot.draw(G6Win)
-	G6Win.getMouse()
+	# G6Win.getMouse()
 	G6Win.close()
 
 def main():
@@ -220,7 +194,7 @@ def main():
 	num_peaks = len(peaks)
 
 	global win
-	jMatrix = findJMatrix(peaks)
+	jMatrix = retJMatrix(peaks,size_x,size_y)
 	win = GraphWin('CDW Data', int(size_x*scale), int(size_y*scale))
 	img = background()
 	img.draw(win)
@@ -233,7 +207,7 @@ def main():
 		pt.draw(win)
 
 	defects = []
-	bondMatrix = triangulation(jMatrix,len(peaks))
+	bondMatrix = triangulation(jMatrix,len(peaks),size_x,size_y)
 	for j,peak in enumerate(peaks):
 		x,y = peak
 		num_bonds = sum(bondMatrix[j])
@@ -296,7 +270,7 @@ def main():
 
 
 	G6_r = orientationalOrder(peaks,edges,bondMatrix,latticeSpacing)
-	win.getMouse()
+	# win.getMouse()
 	win.close()
 
 	# G6_r_Clipped = []

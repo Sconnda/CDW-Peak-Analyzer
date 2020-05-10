@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 import cv2 as cv
 import numpy as np
@@ -115,7 +116,7 @@ def genPhaseShift(stress_factor):
 				phaseShift2[i][j][k] = phaseShift[i+int(width/2)][j+int(height/2)][k]/lattice_spacing+0.5
 
 	cv.imshow('phaseShift',phaseShift2)
-	key = cv.waitKey(0)
+	key = cv.waitKey(1000)
 	cv.destroyAllWindows()
 
 	return phaseShift
@@ -139,7 +140,7 @@ def initializePeaks(phaseShift):
 		if x < width and x >= 0 and y < height and y >= 0:
 			img = cv.circle(img, (int(x),int(y)),3,(255,255,255),-1)
 	cv.imshow('initialPosition',img)
-	key = cv.waitKey(0)
+	key = cv.waitKey(1000)
 	cv.destroyAllWindows()
 
 def runAnimation():
@@ -232,7 +233,7 @@ def runAnimation():
 		key = cv.waitKey(1) & 0xFF
 		if key == ord('c'):
 			selected = -1
-		elif key == ord('q'):
+		elif key == ord('q') or frame == 250:
 			with open("SimulatedData_Peaks.csv", 'w',newline='') as f:
 				wr = csv.writer(f)
 				for peak in peaks:
@@ -243,6 +244,12 @@ def runAnimation():
 	cv.destroyAllWindows()
 
 def main():
+	global width,height, stress_factor
+	if len(sys.argv) > 1:
+		width = int(sys.argv[1])
+		height = int(sys.argv[1])
+	if len(sys.argv) > 2:
+		stress_factor = float(sys.argv[2])
 	os.chdir("SimulatedData")
 	with open("SimulatedData.txt","w+") as file:
 		for i in range(height):

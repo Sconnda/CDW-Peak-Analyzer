@@ -129,9 +129,9 @@ def main():
 
 	for defect in defects:
 		x,y = defect
-		pt = Circle(Point(scale*x,scale*y),5)
-		pt.setFill(color_rgb(255,255,0))
-		pt.setOutline(color_rgb(255,255,0))
+		pt = Circle(Point(scale*x,scale*y),2)
+		pt.setFill(color_rgb(255,0,0))
+		pt.setOutline(color_rgb(255,0,0))
 		pt.draw(win)		
 
 	win.getMouse()
