@@ -26,6 +26,8 @@ def findJMatrix(filename,peaks,size_x,size_y):
 		for row in jMatrix:
 			wr.writerow(row)
 
+	return jMatrix
+
 def triangulation(jMatrix,num_peaks,size_x,size_y):
 	print("Finding triangulation...")
 	bondMatrix = [[0 for i in range(num_peaks)] for j in range(num_peaks)]
@@ -44,5 +46,10 @@ def triangulation(jMatrix,num_peaks,size_x,size_y):
 		if 10*int(10*(y+1)/size_y) > pDone:
 			pDone = 10*int(10*(y+1)/size_y)
 			print(str(pDone)+"%")
+
+	with open("VortexLattice_Triangulation.csv", 'w',newline='') as f:
+		wr = csv.writer(f)
+		for row in bondMatrix:
+			wr.writerow(row)
 
 	return bondMatrix

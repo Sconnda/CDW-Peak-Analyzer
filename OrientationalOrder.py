@@ -27,7 +27,7 @@ def retJMatrix(peaks,size_x,size_y):
 	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
 
 	if noJMatrix:
-		findJMatrix(filename,peaks,size_x,size_y)
+		return findJMatrix(filename,peaks,size_x,size_y)
 
 	jMatrix = []
 	with open(filename+"_jMatrix.csv",newline='') as file:
@@ -38,6 +38,22 @@ def retJMatrix(peaks,size_x,size_y):
 			jMatrix.append(row)
 
 	return jMatrix
+
+def retTriangulation(jMatrix,n_peaks,size_x,size_y):
+	noTriangulation = not os.path.exists(filename+"_Triangulation.csv")
+
+	if noTriangulation:
+		return triangulation(jMatrix,n_peaks,size_x,size_y)
+
+	bondMatrix = []
+	with open(filename+"_Triangulation.csv",newline='') as file:
+		reader = csv.reader(file,delimiter=',',quotechar='|')
+		for row in reader:
+			for i,x in enumerate(row):
+				row[i] = float(x)
+			bondMatrix.append(row)
+
+	return bondMatrix
 
 def voronoi(jMatrix,num_peaks):
 	img = NewImage.new("RGB", (size_x, size_y))
@@ -207,7 +223,7 @@ def main():
 		pt.draw(win)
 
 	defects = []
-	bondMatrix = triangulation(jMatrix,len(peaks),size_x,size_y)
+	bondMatrix = retTriangulation(jMatrix,len(peaks),size_x,size_y)
 	for j,peak in enumerate(peaks):
 		x,y = peak
 		num_bonds = sum(bondMatrix[j])

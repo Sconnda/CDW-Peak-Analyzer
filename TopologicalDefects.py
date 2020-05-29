@@ -26,7 +26,7 @@ def retJMatrix(peaks,size_x,size_y):
 	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
 
 	if noJMatrix:
-		findJMatrix(filename,peaks,size_x,size_y)
+		return findJMatrix(filename,peaks,size_x,size_y)
 
 	jMatrix = []
 	with open(filename+"_jMatrix.csv",newline='') as file:
@@ -37,6 +37,22 @@ def retJMatrix(peaks,size_x,size_y):
 			jMatrix.append(row)
 
 	return jMatrix
+
+def retTriangulation(jMatrix,n_peaks,size_x,size_y):
+	noTriangulation = not os.path.exists(filename+"_Triangulation.csv")
+
+	if noTriangulation:
+		return triangulation(jMatrix,n_peaks,size_x,size_y)
+
+	bondMatrix = []
+	with open(filename+"_Triangulation.csv",newline='') as file:
+		reader = csv.reader(file,delimiter=',',quotechar='|')
+		for row in reader:
+			for i,x in enumerate(row):
+				row[i] = float(x)
+			bondMatrix.append(row)
+
+	return bondMatrix
 
 def voronoi(jMatrix,num_peaks):
 	img = NewImage.new("RGB", (size_x, size_y))
@@ -114,7 +130,7 @@ def main():
 		pt.draw(win)
 
 	defects = []
-	bondMatrix = triangulation(jMatrix,len(peaks),size_x,size_y)
+	bondMatrix = retTriangulation(jMatrix,len(peaks),size_x,size_y)
 	for j,peak in enumerate(peaks):
 		x,y = peak
 		num_bonds = sum(bondMatrix[j])
@@ -132,9 +148,51 @@ def main():
 		pt = Circle(Point(scale*x,scale*y),2)
 		pt.setFill(color_rgb(255,0,0))
 		pt.setOutline(color_rgb(255,0,0))
-		pt.draw(win)		
+		pt.draw(win)
 
-	win.getMouse()
-	win.close()
+	# # Just for vortex lattice
+	# os.chdir("Domain Lattice")
+	# domain_peaks = []
+	# with open("DomainLattice_Peaks.csv",newline='') as file:
+	# 	reader = csv.reader(file,delimiter=',',quotechar='|')
+	# 	for row in reader:
+	# 		x,y = row
+	# 		x = float(x)
+	# 		y = float(y)
+	# 		domain_peaks.append([x,y])
+	# num_domain_peaks = len(domain_peaks)
+	# for domain_peak in domain_peaks:
+	# 	x,y = domain_peak
+	# 	pt = Circle(Point(scale*x,scale*y),2)
+	# 	pt.setFill(color_rgb(0,255,0))
+	# 	pt.setOutline(color_rgb(0,255,0))
+	# 	pt.draw(win)
+
+	index = -1
+	while(True):
+		p = win.getMouse()
+
+		x,y = peaks[index]
+		pt = Circle(Point(scale*x,scale*y),2)
+		pt.setFill(color_rgb(255,0,0))
+		pt.setOutline(color_rgb(255,0,0))
+		pt.draw(win)
+
+		minDist = np.sqrt(size_x**2+size_y**2)
+		for i,peak in enumerate(peaks):
+			x,y = peak
+			dist = np.sqrt((scale*x-p.x)**2+(scale*y-p.y)**2)
+			if dist < minDist:
+				minDist = dist
+				index = i
+
+		print(index)
+		x,y = peaks[index]
+		pt = Circle(Point(scale*x,scale*y),2)
+		pt.setFill(color_rgb(255,255,255))
+		pt.setOutline(color_rgb(255,255,255))
+		pt.draw(win)
+
+	# win.close()
 
 main()
