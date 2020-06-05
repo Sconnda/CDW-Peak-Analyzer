@@ -126,8 +126,8 @@ def findReciprocalLatticeVectors(peaks,num_peaks,latticeSpacing):
 	keyboard.add_hotkey('s',lambda: storeReciprocalLatticeVectors())
 	vectorsG = []
 	center = Point(253,253)
-	searchSizeX = int(ceil(30*width/505.0))
-	searchSizeY = int(ceil(30*height/505.0))
+	searchSizeX = int(ceil(60*width/505.0))
+	searchSizeY = int(ceil(60*height/505.0))
 	mark = Circle(center,3)
 	mark.setFill(color_rgb(255,255,255))
 	mark.setOutline(color_rgb(255,255,255))
@@ -136,20 +136,20 @@ def findReciprocalLatticeVectors(peaks,num_peaks,latticeSpacing):
 		searchCenter = winFT.getMouse()
 
 		r0 = (int(searchCenter.getX()*width/505.0),int(searchCenter.getY()*height/505.0))
-		maxVal = rec_data[r0[1]][r0[0]]
-		maxPoint = r0
+		maxPoint = [0,0]
+		maxVal = 0
+
 		for dy in range(searchSizeY):
 			for dx in range(searchSizeX):
-				if r0[1]+dy+1 < height and r0[0]+dx+1 < width:
-					val = rec_data[r0[1]+dy+1][r0[0]+dx+1]
-					if val > maxVal:
-						maxVal = val
-						maxPoint = (r0[0]+dx+1,r0[1]+dy+1)
-				if r0[1]-dy-1 >= 0 and r0[0]-dx-1 >= 0:
-					val = rec_data[r0[1]-dy-1][r0[0]-dx-1]
-					if val > maxVal:
-						maxVal = val
-						maxPoint = (r0[0]-dx-1,r0[1]-dy-1)
+				x = r0[0]-int(searchSizeX/2)+dx
+				y = r0[1]-int(searchSizeY/2)+dy
+				if x <= 0 or y <= 0 or x > width or y > height:
+					continue
+				val = rec_data[y][x]
+				if val > maxVal:
+					maxVal = val
+					maxPoint[0] = x
+					maxPoint[1] = y
 
 		pt = Point(int(maxPoint[0]*505.0/width),int(maxPoint[1]*505.0/height))
 
@@ -172,6 +172,16 @@ def findReciprocalLatticeVectors(peaks,num_peaks,latticeSpacing):
 		mark.draw(winFT)
 		ln.draw(winFT)
 		inverseVectorsG = not inverseVectorsG
+
+	# Only for perfect CDW, lattice spacing of 30 pixels
+	G_mag = 2*pi/(15*sqrt(3))
+	dG_scale = 0
+	theta = pi/6
+	dG = [dG_scale*G_mag*cos(theta),dG_scale*G_mag*sin(theta)]
+	vectorsG = []
+	vectorsG.append([(dG[0],G_mag+dG[1]),(0,-G_mag+dG[1])])
+	vectorsG.append([(G_mag*sin(pi/3)+dG[0],G_mag*cos(pi/3)+dG[1]),(-G_mag*sin(pi/3)+dG[0],-G_mag*cos(pi/3)+dG[1])])
+	vectorsG.append([(G_mag*sin(pi/3)+dG[0],-G_mag*cos(pi/3)+dG[1]),(-G_mag*sin(pi/3)+dG[0],G_mag*cos(pi/3)+dG[1])])
 
 	return vectorsG
 
