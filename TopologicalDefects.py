@@ -20,7 +20,7 @@ size_x = 512
 size_y = 512
 scale = 1
 # Mode: draw Voronoi diagram or draw CDW image
-drawVoronoi = True
+drawVoronoi = False
 
 def retJMatrix(peaks,size_x,size_y):
 	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
@@ -145,9 +145,9 @@ def main():
 
 	for defect in defects:
 		x,y = defect
-		pt = Circle(Point(scale*x,scale*y),2)
-		pt.setFill(color_rgb(255,0,0))
-		pt.setOutline(color_rgb(255,0,0))
+		pt = Circle(Point(scale*x,scale*y),4)
+		pt.setFill(color_rgb(255,255,0))
+		pt.setOutline(color_rgb(255,255,0))
 		pt.draw(win)
 
 	# # Just for vortex lattice
@@ -174,8 +174,14 @@ def main():
 
 		x,y = peaks[index]
 		pt = Circle(Point(scale*x,scale*y),2)
-		pt.setFill(color_rgb(255,0,0))
-		pt.setOutline(color_rgb(255,0,0))
+		num_bonds = sum(bondMatrix[index])
+		if num_bonds != 6:
+			pt = Circle(Point(scale*x,scale*y),4)
+			pt.setFill(color_rgb(255,255,0))
+			pt.setOutline(color_rgb(255,255,0))
+		else:
+			pt.setFill(color_rgb(255,0,0))
+			pt.setOutline(color_rgb(255,0,0))
 		pt.draw(win)
 
 		minDist = np.sqrt(size_x**2+size_y**2)
@@ -189,6 +195,9 @@ def main():
 		print(index)
 		x,y = peaks[index]
 		pt = Circle(Point(scale*x,scale*y),2)
+		num_bonds = sum(bondMatrix[index])
+		if num_bonds != 6:
+			pt = Circle(Point(scale*x,scale*y),4)
 		pt.setFill(color_rgb(255,255,255))
 		pt.setOutline(color_rgb(255,255,255))
 		pt.draw(win)

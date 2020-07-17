@@ -17,11 +17,17 @@ from modules.bondFunctions import triangulation
 filename = "CDW_Data"
 # Cutoff radius for orientational order correlation function G6(r)
 cutoff = 100
+# Borders of image to select edge peaks
+border_x = 0.1
+border_y = 0.07
 # Window and size of window
 win = 0
 size_x = 512
 size_y = 512
 scale = 1
+
+sin = np.sin
+cos = np.cos
 
 def retJMatrix(peaks,size_x,size_y):
 	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
@@ -87,15 +93,28 @@ def psi6(peak,neighbors):
 	x,y = peak
 	re = 0
 	im = 0
+	re_err = 0
+	im_err = 0
 	N = len(neighbors)
 	for neighbor in neighbors:
 		x2,y2 = neighbor
-		angle = np.arctan2(y2-y,x2-x)
-		re += np.cos(6*angle)
-		im += np.sin(6*angle)
+		X = x2-x
+		Y = y2-y
+		dX = 4
+		dY = 4
+		theta = np.arctan2(Y,X)
+		dtheta = ((X*dY)**2+(Y*dX)**2)**0.5/(X**2+Y**2)
+		re += cos(6*theta)
+		im += sin(6*theta)
+		re_err += (6*sin(6*theta)*dtheta)**2
+		im_err += (6*cos(6*theta)*dtheta)**2
+	re_err = re_err**0.5
+	im_err = im_err**0.5
 	re /= N
 	im /= N
-	return (re,im)
+	re_err /= N
+	im_err /= N
+	return [(re,im),(re_err,im_err)]
 
 def findNeighbors(peak_index,peaks,bondMatrix):
 	neighbors = []
@@ -107,6 +126,8 @@ def findNeighbors(peak_index,peaks,bondMatrix):
 def orientationalOrder(peaks,edges,bondMatrix,latticeSpacing):
 	G6_r_re = [0 for i in range(cutoff)]
 	G6_r_im = [0 for i in range(cutoff)]
+	G6_r_re_err = [0 for i in range(cutoff)]
+	G6_r_im_err = [0 for i in range(cutoff)]
 	N_r = [0 for i in range(cutoff)]
 	percentDone = 0
 	for i,peak in enumerate(peaks):
@@ -123,7 +144,7 @@ def orientationalOrder(peaks,edges,bondMatrix,latticeSpacing):
 			continue
 
 		neighbors = findNeighbors(i,peaks,bondMatrix)
-		re,im = psi6(peak,neighbors)
+		[(re,im),(re_err,im_err)] = psi6(peak,neighbors)
 
 		(x,y) = peak
 		for j,peak2 in enumerate(peaks):
@@ -142,26 +163,33 @@ def orientationalOrder(peaks,edges,bondMatrix,latticeSpacing):
 			if distance >= cutoff or distance < 0.5:
 				continue
 			neighbors2 = findNeighbors(j,peaks,bondMatrix)
-			re2,im2 = psi6(peak2,neighbors2)
+			[(re2,im2),(re2_err,im2_err)] = psi6(peak2,neighbors2)
 			g6_r = (re*re2+im*im2, re2*im-re*im2)
+			g6_r_err = (((re*re2_err)**2+(re2*re_err)**2+(im*im2_err)**2+(im2*im_err)**2)**0.5, ((re2*im_err)**2+(im*re2_err)**2+(re*im2_err)**2+(im2*re_err)**2)**0.5)
 
 			rBin = int(distance-0.5)
 			G6_r_re[rBin] += g6_r[0]
 			G6_r_im[rBin] += g6_r[1]
+			G6_r_re_err[rBin] += g6_r_err[0]**2
+			G6_r_im_err[rBin] += g6_r_err[1]**2
 			N_r[rBin] += 1
-
 	for rBin in range(cutoff):
 		if N_r[rBin] > 0:
+			G6_r_re_err[rBin] = G6_r_re_err[rBin]**0.5
+			G6_r_im_err[rBin] = G6_r_im_err[rBin]**0.5
 			G6_r_re[rBin] = G6_r_re[rBin]/N_r[rBin]
 			G6_r_im[rBin] = G6_r_im[rBin]/N_r[rBin]
+			G6_r_re_err[rBin] = G6_r_re_err[rBin]/N_r[rBin]
+			G6_r_im_err[rBin] = G6_r_im_err[rBin]/N_r[rBin]
 
-	return (G6_r_re,G6_r_im)
+	return [(G6_r_re,G6_r_re_err),(G6_r_im,G6_r_im_err)]
 
-def storeG6(G6_r):
+def storeG6(G6_r,G6_r_err):
 	maxLen = len(G6_r)
 	G6_r0 = 2*G6_r[0]-G6_r[1]
 	for i in range(maxLen):
 		G6_r[i] /= G6_r0
+		G6_r_err[i] /= G6_r0
 	# Save G6(r) plot as an image
 	plt.plot([i+1 for i in range(maxLen)],G6_r,'bo')
 	plt.ylim((0, 1))
@@ -173,7 +201,7 @@ def storeG6(G6_r):
 	with open(filename+"_G6.csv", 'w',newline='') as f:
 		wr = csv.writer(f, quoting=csv.QUOTE_ALL)
 		for i in range(maxLen):
-			wr.writerow([i+1,G6_r[i]])
+			wr.writerow([i+1,G6_r[i],G6_r_err[i]])
 
 	img = NewImage.open(filename+"_G6.png")
 	width,height = img.size
@@ -181,7 +209,7 @@ def storeG6(G6_r):
 	G6Win = GraphWin('G6(r)', width, height)
 	G6Plot = Image(Point(width/2,height/2), filename+"_G6.png")
 	G6Plot.draw(G6Win)
-	# G6Win.getMouse()
+	G6Win.getMouse()
 	G6Win.close()
 
 def main():
@@ -245,29 +273,17 @@ def main():
 		for j,bonded in enumerate(bondMatrix[i]):
 			if bonded == 1:
 				x2,y2 = peaks[j]
-		# 		angle = np.arctan2(y2-y,x2-x)
-		# 		bondAngles.append(angle)
 				total_bonds += 1
 				latticeSpacing += np.sqrt((x2-x)**2 + (y2-y)**2)
-		# bondAngles = sorted(bondAngles)
-		# maxAdjAngle = 0
-		# for j in range(len(bondAngles)):
-		# 	angle1 = bondAngles[j]
-		# 	if j < len(bondAngles)-1:
-		# 		angle2 = bondAngles[j+1]
-		# 	else:
-		# 		angle2 = bondAngles[0]+2*np.pi
-		# 	adjAngle = angle2-angle1
-		# 	if adjAngle > maxAdjAngle:
-		# 		maxAdjAngle = adjAngle
-		# if maxAdjAngle > 0.6*np.pi:
-		# 	edges.append(i)
-		if y < 0.05*size_y or y > 0.95*size_y:
+		if y < border_y*size_y or y > (1-border_y)*size_y:
 			edges.append(i)
-		elif x < 0.05*size_x or x > 0.95*size_x:
+		elif x < border_x*size_x or x > (1-border_x)*size_x:
 			edges.append(i)
 
 	latticeSpacing /= total_bonds
+	print(latticeSpacing)
+
+	latticeSpacing = 39.0428
 
 	for defect in defects:
 		x,y = defect
@@ -286,7 +302,7 @@ def main():
 
 
 	G6_r = orientationalOrder(peaks,edges,bondMatrix,latticeSpacing)
-	# win.getMouse()
+	win.getMouse()
 	win.close()
 
 	# G6_r_Clipped = []
@@ -298,7 +314,8 @@ def main():
 	# 		G6_0 = 2*G6_i-G6_2
 	# 	if G6_i != 0:
 	# 		G6_r_Clipped.append(G6_i/G6_0)
-	G6_r_Clipped = G6_r[0][0:20]
-	storeG6(G6_r_Clipped)
+	# G6_r_Clipped = G6_r[0][0:20]
+	G6_r_Clipped = G6_r[0]
+	storeG6(G6_r_Clipped[0],G6_r_Clipped[1])
 
 main()

@@ -10,6 +10,8 @@ from PIL import Image as NewImage
 
 # Declaring global variables_____________________
 filename = "CDW_Data"
+min_point = 0
+max_point = 0
 # Peak searching variables
 searching = True
 thresholdedImage = True
@@ -26,25 +28,16 @@ def createDataImage(data):
 	# Create window for drawing
 	size_x = len(data[0])
 	size_y = len(data)
-	winGen = GraphWin('Generating CDW Image...', size_x, size_y)
-	winGen.setBackground('black')
 
 	# Draw data
+	img = NewImage.new("RGB", (size_x, size_y))
+	putpixel = img.putpixel
 	for y in range(size_y):
 		for x in range(size_x):
-			pt = Point(x,y)
 			color = int((data[y][x]-min_point)/(max_point-min_point)*255)
-			pt.setOutline(color_rgb(color,color,color))
-			pt.draw(winGen)
+			putpixel((x,y),(color,color,color))
 
-	winGen.getMouse()
-
-	# Save drawing as image file for data
-	winGen.postscript(file=filename+".eps",colormode="gray")
-	winGen.close()
-	img = NewImage.open(filename+".eps")
-	img = img.resize((size_x,size_y),NewImage.ANTIALIAS)
-	img.save(filename+".gif","gif")
+	img.save(filename+".gif",'gif')
 
 # Show raw data as image backdrop
 def setBackground(data):
@@ -113,17 +106,17 @@ def main():
 	for peak in peaks:
 		x,y = peak
 		pt = Point(scale*x,scale*y)
-		mark = Circle(pt,3)
+		mark = Circle(pt,1)
 		mark.setFill(color_rgb(255,0,0))
 		mark.setOutline(color_rgb(255,0,0))
-		mark.draw(win)		
+		mark.draw(win)
 
 	keyboard.add_hotkey('s',lambda: save())
 	keyboard.add_hotkey('z',lambda: undo())
 	while searching:
 		pt = win.getMouse()
 
-		mark = Circle(pt,3)
+		mark = Circle(pt,1)
 		mark.setFill(color_rgb(255,0,0))
 		mark.setOutline(color_rgb(255,0,0))
 		mark.draw(win)

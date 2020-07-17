@@ -26,31 +26,21 @@ size_x = 512
 size_y = 512
 scale = 1
 
-# Generate an image file for the data
 def createDataImage(data):
 
 	# Create window for drawing
 	size_x = len(data[0])
 	size_y = len(data)
-	winGen = GraphWin('Generating CDW Image...', size_x, size_y)
-	winGen.setBackground('black')
-
+	
 	# Draw data
+	img = NewImage.new("RGB", (size_x, size_y))
+	putpixel = img.putpixel
 	for y in range(size_y):
 		for x in range(size_x):
-			pt = Point(x,y)
 			color = int((data[y][x]-min_point)/(max_point-min_point)*255)
-			pt.setOutline(color_rgb(color,color,color))
-			pt.draw(winGen)
+			putpixel((x,y),(color,color,color))
 
-	winGen.getMouse()
-
-	# Save drawing as image file for data
-	winGen.postscript(file=filename+".eps",colormode="gray")
-	winGen.close()
-	img = NewImage.open(filename+".eps")
-	img = img.resize((size_x,size_y),NewImage.ANTIALIAS)
-	img.save(filename+".gif","gif")
+	img.save(filename+".gif",'gif')
 
 # Show raw data as image backdrop
 def setBackground(data):
@@ -134,7 +124,7 @@ def findPeaks(clusters):
 		peaks.append((xCM,yCM))
 
 		# Mark peaks
-		pt = Circle(Point(int(scale*xCM),int(scale*yCM)),3)
+		pt = Circle(Point(int(scale*xCM),int(scale*yCM)),1)
 		pt.setFill(color_rgb(255,0,0))
 		pt.setOutline(color_rgb(255,0,0))
 		pt.draw(win)
