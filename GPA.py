@@ -1,6 +1,5 @@
 import os
 import sys
-import keyboard
 
 import numpy as np
 import csv
@@ -8,14 +7,8 @@ import csv
 from graphics import *
 from PIL import Image as NewImage
 
-from modules.bondFunctions import findJMatrix
-from modules.bondFunctions import triangulation
-from modules.reciprocalLattice import findFT
-from modules.reciprocalLattice import findInvFT
-from modules.reciprocalLattice import stepFTMask
-from modules.reciprocalLattice import gaussianFTMask
-from modules.reciprocalLattice import createRecDataImage
-from modules.reciprocalLattice import createReconstructedImage
+from modules.bondFunctions import *
+from modules.reciprocalLattice import *
 
 # Declaring global variables_____________________
 filename = "CDW_Data"
@@ -122,7 +115,7 @@ def retFT(peaks,latticeSpacing):
 	noFT = not os.path.exists(filename+"_ReciprocalLattice.csv") or not os.path.exists(filename+"_ReciprocalLattice_Im.csv")
 
 	if noFT:
-		return findFT(filename,peaks,latticeSpacing,FTWidth,FTHeight)
+		return findFT(filename,peaks,size_x,size_y,latticeSpacing,FTWidth,FTHeight)
 
 	rec_data_re = []
 	rec_data_im = []

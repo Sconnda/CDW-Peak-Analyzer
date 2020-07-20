@@ -26,26 +26,41 @@ cos = np.cos
 atan2 = np.arctan2
 exp = np.exp
 
-def findFT(filename,peaks, latticeSpacing, width, height):
-	print("Calculating Fourier Transform...")
-	rec_data_re = [[0 for x in range(width)] for y in range(height)]
-	rec_data_im = [[0 for x in range(width)] for y in range(height)]
-	pDone = 0
-	for y in range(height):
-		for x in range(width):
-			# The image should have a width and height each corresponding to a range of (-4*pi/a, 4*pi/a)
-			k_x = 4*pi*(2.0*x/width-1)/latticeSpacing
-			k_y = 4*pi*(2.0*y/height-1)/latticeSpacing
-			n = [0,0]
-			for peak in peaks:
-				R_x,R_y = peak
-				n[0] += cos(k_x*R_x+k_y*R_y)
-				n[1] -= sin(k_x*R_x+k_y*R_y)
-			rec_data_re[y][x] = n[0]
-			rec_data_im[y][x] = n[1]
-		if round(0.1*int(1000*float(y+1)/height),2) > pDone:
-			pDone = round(0.1*int(1000*float(y+1)/height),2)
-			print(str(pDone)+"%")
+def findFT(filename,peaks,size_x,size_y, latticeSpacing, width, height):
+	# print("Calculating Fourier Transform...")
+	data = [[0 for x in range(size_x)] for y in range(size_y)]
+	for peak in peaks:
+		x,y = peak
+		x = min(int(round(x)),size_x-1)
+		y = min(int(round(y)),size_y-1)
+		data[y][x] = 1
+
+	# data = np.loadtxt(filename+".txt")
+
+	data_np = np.array(data)
+	rec_data = np.fft.fft2(data_np)
+	rec_data = np.fft.fftshift(rec_data)
+	rec_data_re = rec_data.real.tolist()
+	rec_data_im = rec_data.imag.tolist()
+
+	# rec_data_re = [[0 for x in range(width)] for y in range(height)]
+	# rec_data_im = [[0 for x in range(width)] for y in range(height)]
+	# pDone = 0
+	# for y in range(height):
+	# 	for x in range(width):
+	# 		# The image should have a width and height each corresponding to a range of (-4*pi/a, 4*pi/a)
+	# 		k_x = 4*pi*(2.0*x/width-1)/latticeSpacing
+	# 		k_y = 4*pi*(2.0*y/height-1)/latticeSpacing
+	# 		n = [0,0]
+	# 		for peak in peaks:
+	# 			R_x,R_y = peak
+	# 			n[0] += cos(k_x*R_x+k_y*R_y)
+	# 			n[1] -= sin(k_x*R_x+k_y*R_y)
+	# 		rec_data_re[y][x] = n[0]
+	# 		rec_data_im[y][x] = n[1]
+	# 	if round(0.1*int(1000*float(y+1)/height),2) > pDone:
+	# 		pDone = round(0.1*int(1000*float(y+1)/height),2)
+	# 		print(str(pDone)+"%")
 
 	with open(filename+"_ReciprocalLattice.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
@@ -124,8 +139,8 @@ def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type):
 	max_point = -num_peaks
 	ave = 0
 
-	# Pass through a high-pass filter to increase the brightness of the edges
-	rec_data = globalFTFilter(rec_data)
+	# # Pass through a high-pass filter to increase the brightness of the edges
+	# rec_data = globalFTFilter(rec_data)
 
 	# Find extrema
 	for y in range(dataHeight):
@@ -152,7 +167,7 @@ def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type):
 			# # Ignoring central peak, necessary when the peaks are very smeared at non-zero G
 			# if abs(x-dataWidth/2) < 20 and abs(y-dataHeight/2) < 20:
 			# 	continue
-			color = int((rec_data[y][x]-min_point)/(max_point-min_point)*255)
+			color = min(int((rec_data[y][x]-min_point)/(max_point-min_point)*255),255)
 			putpixel((X,Y),(color,color,color))
 
 	if return_type == "Re":
@@ -182,22 +197,31 @@ def singlePointIFT(rec_data_mag,rec_data_phase,width,height,latticeSpacing,x,y):
 	return n
 
 def findInvFT(filename,rec_data,latticeSpacing,size_x,size_y):
-	print("Calculating Inverse Fourier Transform...")
-	data_re = [[0 for x in range(size_x)] for y in range(size_y)]
-	data_im = [[0 for x in range(size_x)] for y in range(size_y)]
-	pDone = 0
+	# print("Calculating Inverse Fourier Transform...")
+	# data_re = [[0 for x in range(size_x)] for y in range(size_y)]
+	# data_im = [[0 for x in range(size_x)] for y in range(size_y)]
+	# pDone = 0
 
-	# Store rec_data as magnitudes and phases, which are easier to deal with here
-	width = len(rec_data[0][0])
-	height = len(rec_data[0])
-	rec_data_mag = [[0 for x in range(width)] for y in range(height)]
-	for i in range(height):
-		for j in range(width):
-			rec_data_mag[i][j] = sqrt(rec_data[0][i][j]**2+rec_data[1][i][j]**2)
-	rec_data_phase = [[0 for x in range(width)] for y in range(height)]
-	for i in range(height):
-		for j in range(width):
-			rec_data_phase[i][j] = atan2(rec_data[1][i][j],rec_data[0][i][j])
+	# # Store rec_data as magnitudes and phases, which are easier to deal with here
+	# width = len(rec_data[0][0])
+	# height = len(rec_data[0])
+	# rec_data_mag = [[0 for x in range(width)] for y in range(height)]
+	# for i in range(height):
+	# 	for j in range(width):
+	# 		rec_data_mag[i][j] = sqrt(rec_data[0][i][j]**2+rec_data[1][i][j]**2)
+	# rec_data_phase = [[0 for x in range(width)] for y in range(height)]
+	# for i in range(height):
+	# 	for j in range(width):
+	# 		rec_data_phase[i][j] = atan2(rec_data[1][i][j],rec_data[0][i][j])
+
+	rec_data_re = np.array(rec_data[0])
+	rec_data_im = np.array(rec_data[1])
+	rec_data = rec_data_re + 1j*rec_data_im
+
+	data = np.fft.ifft2(rec_data)
+	# data = np.fft.fftshift(data)
+	data_re = data.real.tolist()
+	data_im = data.imag.tolist()
 
 	# singlePointIFT_vect = np.vectorize(singlePointIFT)
 	# singlePointIFT_vect.excluded.add(0)
@@ -208,22 +232,22 @@ def findInvFT(filename,rec_data,latticeSpacing,size_x,size_y):
 	# data_re = data_re.tolist()
 	# data_im = data_im.tolist()
 
-	for y in range(size_y):
-		for x in range(size_x):
-			n = [0,0]
-			for i in range(height):
-				for j in range(width):
-					k_y = 4*pi*(2*i/height-1)/latticeSpacing
-					k_x = 4*pi*(2*j/width-1)/latticeSpacing
-					rec_data_phase[i][j] += k_x*x+k_y*y
-					n[0] += rec_data_mag[i][j]*cos(rec_data_phase[i][j])
-					n[1] += rec_data_mag[i][j]*sin(rec_data_phase[i][j])
-			data_re[y][x] = n[0]
-			data_im[y][x] = n[1]
-		# Print percent done while running
-		if round(0.1*int(1000*float(y+1)/size_y),2) > pDone:
-			pDone = round(0.1*int(1000*float(y+1)/size_y),2)
-			print(str(pDone)+"%")
+	# for y in range(size_y):
+	# 	for x in range(size_x):
+	# 		n = [0,0]
+	# 		for i in range(height):
+	# 			for j in range(width):
+	# 				k_y = 4*pi*(2*i/height-1)/latticeSpacing
+	# 				k_x = 4*pi*(2*j/width-1)/latticeSpacing
+	# 				rec_data_phase[i][j] += k_x*x+k_y*y
+	# 				n[0] += rec_data_mag[i][j]*cos(rec_data_phase[i][j])
+	# 				n[1] += rec_data_mag[i][j]*sin(rec_data_phase[i][j])
+	# 		data_re[y][x] = n[0]
+	# 		data_im[y][x] = n[1]
+	# 	# Print percent done while running
+	# 	if round(0.1*int(1000*float(y+1)/size_y),2) > pDone:
+	# 		pDone = round(0.1*int(1000*float(y+1)/size_y),2)
+	# 		print(str(pDone)+"%")
 
 	with open(filename+"_ReconstructedLattice_Re.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
