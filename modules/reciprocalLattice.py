@@ -148,7 +148,7 @@ def mag(re,im):
 def phase(re,im):
 	return atan2(im,re)
 
-def findInvFT(filename,rec_data,size_x,size_y):
+def findInvFT(filename,rec_data,extension,size_x,size_y):
 
 	rec_data_re = np.array(rec_data[0])
 	rec_data_im = np.array(rec_data[1])
@@ -166,29 +166,29 @@ def findInvFT(filename,rec_data,size_x,size_y):
 	phase_vect = np.vectorize(phase)
 	data_phase = phase_vect(data.real,data.imag).tolist()
 
-	with open(filename+"_BraggFilteredData_Re.csv", 'w',newline='') as f:
+	with open(filename+"_"+extension+"_Re.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
 		for row in data_re:
 			wr.writerow(row)
 
-	with open(filename+"_BraggFilteredData_Im.csv", 'w',newline='') as f:
+	with open(filename+"_"+extension+"_Im.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
 		for row in data_im:
 			wr.writerow(row)
 
-	with open(filename+"_BraggFilteredData_Mag.csv", 'w',newline='') as f:
+	with open(filename+"_"+extension+"_Mag.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
 		for row in data_mag:
 			wr.writerow(row)
 
-	with open(filename+"_BraggFilteredData_RawPhase.csv", 'w',newline='') as f:
+	with open(filename+"_"+extension+"_RawPhase.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
 		for row in data_phase:
 			wr.writerow(row)
 
 	return data_re,data_im
 
-def createReconstructedImage(filename,braggFilteredData,size_x,size_y,return_type):
+def createReconstructedImage(filename,braggFilteredData,size_x,size_y,return_type,extension):
 	braggFilteredData_Re = braggFilteredData[0]
 
 	braggFilteredData_Im = braggFilteredData[1]
@@ -249,18 +249,18 @@ def createReconstructedImage(filename,braggFilteredData,size_x,size_y,return_typ
 			color = int((braggFilteredData_Phase[y][x]-min_point_Phase)/(max_point_Phase-min_point_Phase)*255)
 			putpixel((x,y),(color,color,color))
 
-	img_Re.save(filename+"_BraggFiltered_Re.gif",'gif')
-	img_Im.save(filename+"_BraggFiltered_Im.gif",'gif')
-	img_Mag.save(filename+"_BraggFiltered_Mag.gif",'gif')
-	img_Phase.save(filename+"_BraggFiltered_RawPhase.gif",'gif')
+	img_Re.save(filename+"_"+extension+"_Re.gif",'gif')
+	img_Im.save(filename+"_"+extension+"_Im.gif",'gif')
+	img_Mag.save(filename+"_"+extension+"_Mag.gif",'gif')
+	img_Phase.save(filename+"_"+extension+"_RawPhase.gif",'gif')
 
 	if return_type == "Re":
-		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Re.gif")
+		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_"+extension+"_Re.gif")
 	elif return_type == "Im":
-		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Im.gif")
+		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_"+extension+"_Im.gif")
 	elif return_type == "Phase":
-		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_RawPhase.gif")
+		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_"+extension+"_RawPhase.gif")
 	else: # return_type == "Mag" by default
-		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Mag.gif")
+		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_"+extension+"_Mag.gif")
 
 	return img
