@@ -36,10 +36,13 @@ def findFT(filename,peaks,size_x,size_y, latticeSpacing, width, height):
 		data[y][x] = 1
 
 	# data = np.loadtxt(filename+".txt")
+	# data_list = data.tolist()
+	# min_data = min(min(data_list))
+	# data += min_data
 
-	data_np = np.array(data)
-	rec_data = np.fft.fft2(data_np)
+	rec_data = np.fft.fft2(data)
 	rec_data = np.fft.fftshift(rec_data)
+	# rec_data = np.flip(rec_data,0)
 	rec_data_re = rec_data.real.tolist()
 	rec_data_im = rec_data.imag.tolist()
 
@@ -106,7 +109,7 @@ def gaussianFTMask(rec_data, latticeSpacing, kx_center, ky_center, radius):
 	return rec_data_filtered_re,rec_data_filtered_im
 
 def highPassFilterMask(kxSc,kySc):
-	return (1-exp(-pi*(kxSc**2+kySc**2)/2))
+	return (1-exp(-pi*(kxSc**2+kySc**2)/0.1))
 
 def globalFTFilter(rec_data):
 	width = len(rec_data[0])
@@ -120,7 +123,7 @@ def globalFTFilter(rec_data):
 			rec_data_filtered[i][j] = mask(kxSc,kySc)*rec_data[i][j]
 	return rec_data_filtered
 
-def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type):
+def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type,extension):
 	dataWidth = len(rec_data[0][0])
 	dataHeight = len(rec_data[0])
 
@@ -137,10 +140,9 @@ def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type):
 
 	min_point = num_peaks
 	max_point = -num_peaks
-	ave = 0
 
-	# # Pass through a high-pass filter to increase the brightness of the edges
-	# rec_data = globalFTFilter(rec_data)
+	# Pass through a high-pass filter to increase the brightness of the edges
+	rec_data = globalFTFilter(rec_data)
 
 	# Find extrema
 	for y in range(dataHeight):
@@ -150,12 +152,10 @@ def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type):
 			# 	continue
 
 			val = rec_data[y][x]
-			ave += val
 			if val < min_point:
 				min_point = val
 			if val > max_point:
 				max_point = val
-	ave /= (dataWidth*dataHeight)
 
 	# Draw data
 	img = NewImage.new("RGB", (width, height))
@@ -171,14 +171,14 @@ def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type):
 			putpixel((X,Y),(color,color,color))
 
 	if return_type == "Re":
-		img.save(filename+"_FT.gif",'gif')
-		img = Image(Point(int(width/2),int(height/2)), filename+"_FT.gif")
+		img.save(filename+"_"+extension+".gif",'gif')
+		img = Image(Point(int(width/2),int(height/2)), filename+"_"+extension+".gif")
 	elif return_type == "Im":
-		img.save(filename+"_FT_Im.gif",'gif')
-		img = Image(Point(int(width/2),int(height/2)), filename+"_FT_Im.gif")
+		img.save(filename+"_"+extension+"_Im.gif",'gif')
+		img = Image(Point(int(width/2),int(height/2)), filename+"_"+extension+"_Im.gif")
 	elif return_type == "Mag":
-		img.save(filename+"_FT_Mag.gif",'gif')
-		img = Image(Point(int(width/2),int(height/2)), filename+"_FT_Mag.gif")
+		img.save(filename+"_"+extension+"_Mag.gif",'gif')
+		img = Image(Point(int(width/2),int(height/2)), filename+"_"+extension+"_Mag.gif")
 
 	return img
 
@@ -264,41 +264,82 @@ def findInvFT(filename,rec_data,latticeSpacing,size_x,size_y):
 def mag(re,im):
 	return sqrt(re**2+im**2)
 
+def phase(re,im):
+	return atan2(im,re)
+
 def createReconstructedImage(filename,braggFilteredData,size_x,size_y,return_type):
-	if return_type == "Im":
-		braggFilteredData = braggFilteredData[1]
-	elif return_type == "Mag":
-		braggFilteredData_mag = [[0 for x in range(size_x)] for y in range(size_y)]
-		mag_vect = np.vectorize(mag)
-		braggFilteredData_mag = mag_vect(braggFilteredData[0],braggFilteredData[1])
-		# for i in range(size_y):
-		# 	for j in range(size_x):
-		# 		braggFilteredData_mag[i][j] = sqrt(braggFilteredData[0][i][j]**2+braggFilteredData[1][i][j]**2)
-		braggFilteredData = braggFilteredData_mag.tolist()
-	else: # return_type of "Re" is taken default
-		return_type = "Re"
-		braggFilteredData = braggFilteredData[0]
+	braggFilteredData_Re = braggFilteredData[0]
 
+	braggFilteredData_Im = braggFilteredData[1]
+
+	braggFilteredData_Mag = [[0 for x in range(size_x)] for y in range(size_y)]
+	mag_vect = np.vectorize(mag)
+	braggFilteredData_Mag = mag_vect(braggFilteredData[0],braggFilteredData[1]).tolist()
+
+	braggFilteredData_Phase = [[0 for x in range(size_x)] for y in range(size_y)]
+	phase_vect = np.vectorize(phase)
+	braggFilteredData_Phase = phase_vect(braggFilteredData[0],braggFilteredData[1]).tolist()
+
+	# REAL IMAGE__________________
 	# Find extrema
-	min_point = min(min(braggFilteredData))
-	max_point = max(max(braggFilteredData))
-
+	min_point_Re = min(min(braggFilteredData_Re))
+	max_point_Re = max(max(braggFilteredData_Re))
 	# Draw data
-	img = NewImage.new("RGB", (size_x, size_y))
-	putpixel = img.putpixel
+	img_Re = NewImage.new("RGB", (size_x, size_y))
+	putpixel = img_Re.putpixel
 	for y in range(size_y):
 		for x in range(size_x):
-			color = int((braggFilteredData[y][x]-min_point)/(max_point-min_point)*255)
+			color = int((braggFilteredData_Re[y][x]-min_point_Re)/(max_point_Re-min_point_Re)*255)
 			putpixel((x,y),(color,color,color))
 
+	# IMAGINARY IMAGE__________________
+	# Find extrema
+	min_point_Im = min(min(braggFilteredData_Im))
+	max_point_Im = max(max(braggFilteredData_Im))
+	# Draw data
+	img_Im = NewImage.new("RGB", (size_x, size_y))
+	putpixel = img_Im.putpixel
+	for y in range(size_y):
+		for x in range(size_x):
+			color = int((braggFilteredData_Im[y][x]-min_point_Im)/(max_point_Im-min_point_Im)*255)
+			putpixel((x,y),(color,color,color))
+
+	# MAGNITUDE IMAGE__________________
+	# Find extrema
+	min_point_Mag = min(min(braggFilteredData_Mag))
+	max_point_Mag = max(max(braggFilteredData_Mag))
+	# Draw data
+	img_Mag = NewImage.new("RGB", (size_x, size_y))
+	putpixel = img_Mag.putpixel
+	for y in range(size_y):
+		for x in range(size_x):
+			color = int((braggFilteredData_Mag[y][x]-min_point_Mag)/(max_point_Mag-min_point_Mag)*255)
+			putpixel((x,y),(color,color,color))
+
+	# PHASE IMAGE__________________
+	# Find extrema
+	min_point_Phase = min(min(braggFilteredData_Phase))
+	max_point_Phase = max(max(braggFilteredData_Phase))
+	# Draw data
+	img_Phase = NewImage.new("RGB", (size_x, size_y))
+	putpixel = img_Phase.putpixel
+	for y in range(size_y):
+		for x in range(size_x):
+			color = int((braggFilteredData_Phase[y][x]-min_point_Phase)/(max_point_Phase-min_point_Phase)*255)
+			putpixel((x,y),(color,color,color))
+
+	img_Re.save(filename+"_BraggFiltered_Re.gif",'gif')
+	img_Im.save(filename+"_BraggFiltered_Im.gif",'gif')
+	img_Mag.save(filename+"_BraggFiltered_Mag.gif",'gif')
+	img_Phase.save(filename+"_BraggFiltered_Phase.gif",'gif')
+
 	if return_type == "Re":
-		img.save(filename+"_BraggFiltered_Re.gif",'gif')
 		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Re.gif")
-	if return_type == "Im":
-		img.save(filename+"_BraggFiltered_Im.gif",'gif')
+	elif return_type == "Im":
 		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Im.gif")
-	elif return_type == "Mag":
-		img.save(filename+"_BraggFiltered_Mag.gif",'gif')
+	elif return_type == "Phase":
+		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Phase.gif")
+	else: # return_type == "Mag" by default
 		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Mag.gif")
 
 	return img

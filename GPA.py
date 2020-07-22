@@ -106,86 +106,52 @@ def retTriangulation(jMatrix,n_peaks,size_x,size_y):
 
 	return bondMatrix
 
-# Return a 2D array of the Fourier transformed image in k-space
-#   The limits of the 2D array are always [-4pi/a, 4pi/a] in both the k_x and k_y directions
-#   FTWidth and FTHeight correspond to the resolution you want in the Fourier transform
-#   To confirm, this means the center of the image corresponds to k = (0,0)
-def retFT(peaks,latticeSpacing):
-	global FTImgWidth, FTImgHeight
-	noFT = not os.path.exists(filename+"_ReciprocalLattice.csv") or not os.path.exists(filename+"_ReciprocalLattice_Im.csv")
+# # Return a 2D array of the Fourier transformed image in k-space
+# #   The limits of the 2D array are always [-4pi/a, 4pi/a] in both the k_x and k_y directions
+# #   FTWidth and FTHeight correspond to the resolution you want in the Fourier transform
+# #   To confirm, this means the center of the image corresponds to k = (0,0)
+# def retFT(peaks,latticeSpacing):
+# 	global FTImgWidth, FTImgHeight
+# 	noFT = not os.path.exists(filename+"_ReciprocalLattice.csv") or not os.path.exists(filename+"_ReciprocalLattice_Im.csv")
 
-	if noFT:
-		return findFT(filename,peaks,size_x,size_y,latticeSpacing,FTWidth,FTHeight)
+# 	if noFT:
+# 		return findFT(filename,peaks,size_x,size_y,latticeSpacing,FTWidth,FTHeight)
 
-	rec_data_re = []
-	rec_data_im = []
-	with open(filename+"_ReciprocalLattice.csv",newline='') as file:
-		reader = csv.reader(file,delimiter=',',quotechar='|')
-		for row in reader:
-			for i,x in enumerate(row):
-				row[i] = float(x)
-			rec_data_re.append(row)
+# 	rec_data_re = []
+# 	rec_data_im = []
+# 	with open(filename+"_ReciprocalLattice.csv",newline='') as file:
+# 		reader = csv.reader(file,delimiter=',',quotechar='|')
+# 		for row in reader:
+# 			for i,x in enumerate(row):
+# 				row[i] = float(x)
+# 			rec_data_re.append(row)
 
-	with open(filename+"_ReciprocalLattice_Im.csv",newline='') as file:
-		reader = csv.reader(file,delimiter=',',quotechar='|')
-		for row in reader:
-			for i,x in enumerate(row):
-				row[i] = float(x)
-			rec_data_im.append(row)
+# 	with open(filename+"_ReciprocalLattice_Im.csv",newline='') as file:
+# 		reader = csv.reader(file,delimiter=',',quotechar='|')
+# 		for row in reader:
+# 			for i,x in enumerate(row):
+# 				row[i] = float(x)
+# 			rec_data_im.append(row)
 
-	return rec_data_re, rec_data_im
+# 	return rec_data_re, rec_data_im
 
 # Return an image that shows the Fourier transform in k-space
-def FTImage(rec_data,num_peaks,return_type):
+def FTImage(rec_data,num_peaks,return_type,extension):
 	global FTImgWidth, FTImgHeight
-	if return_type == "Re":
-		noFTImage = not os.path.exists(filename+"_FT.gif")
-	elif return_type == "Im":
-		noFTImage = not os.path.exists(filename+"_FT_Im.gif")
-	elif return_type == "Mag":
-		noFTImage = not os.path.exists(filename+"_FT_Mag.gif")
 
-	if noFTImage:
-		createRecDataImage(filename,rec_data,num_peaks,FTImgWidth,FTImgHeight,return_type)
+	createRecDataImage(filename,rec_data,num_peaks,FTImgWidth,FTImgHeight,return_type,extension)
 
 	if return_type == "Re":
-		img = NewImage.open(filename+"_FT.gif")
+		img = NewImage.open(filename+"_"+extension+".gif")
 	elif return_type == "Im":
-		img = NewImage.open(filename+"_FT_Im.gif")
+		img = NewImage.open(filename+"_"+extension+"_Im.gif")
 	elif return_type == "Mag":
-		img = NewImage.open(filename+"_FT_Mag.gif")
+		img = NewImage.open(filename+"_"+extension+"_Mag.gif")
 	img = img.resize((FTImgWidth,FTImgHeight),NewImage.ANTIALIAS)
-	img.save(filename+"_FTScaled.gif","gif")
+	img.save(filename+"_"+extension+"Scaled.gif","gif")
 	img = Image(Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0)), filename+"_FTScaled.gif")
 
 	return img
-
-# Return a 2D array of the inverse Fourier transformed image in real space
-#   The size of the array is equal to the size of the orignal image
-def retInvFT(rec_data,latticeSpacing):
-	global size_x, size_y
-	noInvFT = not os.path.exists(filename+"_ReconstructedLattice_Re.csv") or not os.path.exists(filename+"_ReconstructedLattice_Im.csv")
-
-	if noInvFT:
-		return findInvFT(filename,rec_data,latticeSpacing,size_x,size_y)
-
-	data_re = []
-	data_im = []
-	with open(filename+"_ReconstructedLattice_Re.csv",newline='') as file:
-		reader = csv.reader(file,delimiter=',',quotechar='|')
-		for row in reader:
-			for i,x in enumerate(row):
-				row[i] = float(x)
-			data_re.append(row)
-
-	with open(filename+"_ReconstructedLattice_Im.csv",newline='') as file:
-		reader = csv.reader(file,delimiter=',',quotechar='|')
-		for row in reader:
-			for i,x in enumerate(row):
-				row[i] = float(x)
-			data_im.append(row)
-
-	return data_re, data_im
 
 # Return an image that shows the Fourier transform in k-space
 def IFTImage(braggFilteredData,return_type):
@@ -197,7 +163,9 @@ def IFTImage(braggFilteredData,return_type):
 		img = NewImage.open(filename+"_BraggFiltered_Re.gif")
 	elif return_type == "Im":
 		img = NewImage.open(filename+"_BraggFiltered_Im.gif")
-	elif return_type == "Mag":
+	elif return_type == "Phase":
+		img = NewImage.open(filename+"_BraggFiltered_Phase.gif")
+	else: # return_type == "Mag" by default
 		img = NewImage.open(filename+"_BraggFiltered_Mag.gif")
 	img = img.resize((int(size_x*scale),int(size_y*scale)),NewImage.ANTIALIAS)
 	img.save(filename+"_BraggFilteredScaled.gif","gif")
@@ -270,16 +238,20 @@ def main():
 	# print(latticeSpacing)
 
 	# Generate and show Fourier transform
-	rec_data = retFT(peaks,latticeSpacing)
 	global FTWidth, FTHeight
 	global FTImgWidth, FTImgHeight
-	FTWidth = len(rec_data[0][0])
-	FTHeight = len(rec_data[0])
-	imgFT = FTImage(rec_data,num_peaks,"Mag")
+	rec_data = findFT(filename,peaks,size_x,size_y,latticeSpacing,FTWidth,FTHeight)
+	imgFT = FTImage(rec_data,num_peaks,"Mag","FT")
 	winFT = GraphWin('CDW Data - Fourier Transform', FTImgWidth, FTImgHeight)
 	imgFT.draw(winFT)
 
 	maskCenter = winFT.getMouse()
+	print(sqrt((maskCenter.getX()-FTImgWidth/2.0)**2+(maskCenter.getY()-FTImgHeight/2.0)**2))
+	print(sqrt((maskCenter.getX()-FTImgWidth/2.0)**2+(maskCenter.getY()-FTImgHeight/2.0)**2)*latticeSpacing)
+	kx_center = 8.0*pi*(maskCenter.getX()-FTImgWidth/2.0)/FTImgWidth/latticeSpacing
+	ky_center = 8.0*pi*(maskCenter.getY()-FTImgHeight/2.0)/FTImgHeight/latticeSpacing
+	print(latticeSpacing)
+	print(4*pi/sqrt(3)/sqrt(kx_center**2+ky_center**2))
 	kx_center = 8.0*pi*(maskCenter.getX()-FTImgWidth/2.0)/FTImgWidth/latticeSpacing
 	ky_center = 8.0*pi*(maskCenter.getY()-FTImgHeight/2.0)/FTImgHeight/latticeSpacing
 	graphCenter = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
@@ -304,10 +276,11 @@ def main():
 	# Apply mask on the Fourier Transform
 	mask = stepFTMask
 	rec_data_masked = mask(rec_data, latticeSpacing, kx_center, ky_center, radius)
+	imgFT_masked = FTImage(rec_data_masked,num_peaks,"Mag","FT_masked")
 
 	# Generate and show Fourier transform
-	braggFilteredData = retInvFT(rec_data_masked,latticeSpacing)
-	imgIFT = IFTImage(braggFilteredData,"Mag")
+	braggFilteredData = findInvFT(filename,rec_data_masked,latticeSpacing,size_x,size_y)
+	imgIFT = IFTImage(braggFilteredData,"Phase")
 	winIFT = GraphWin('CDW Data - Inverse Fourier Transform', int(size_x*scale), int(size_y*scale))
 	imgIFT.draw(winIFT)
 	winIFT.getMouse()

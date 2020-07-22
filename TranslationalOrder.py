@@ -126,7 +126,7 @@ def FTImage(rec_data,num_peaks,return_type):
 		noFTImage = not os.path.exists(filename+"_FT_Mag.gif")
 
 	if noFTImage:
-		createRecDataImage(filename,rec_data,num_peaks,FTImgWidth,FTImgHeight,return_type)
+		createRecDataImage(filename,rec_data,num_peaks,FTImgWidth,FTImgHeight,return_type,"FT")
 
 	if return_type == "Re":
 		img = NewImage.open(filename+"_FT.gif")
