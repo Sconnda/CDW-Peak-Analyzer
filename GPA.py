@@ -9,11 +9,10 @@ from PIL import Image as NewImage
 
 from modules.bondFunctions import *
 from modules.reciprocalLattice import *
+from modules.hycht.py import *
 
 # Declaring global variables_____________________
 filename = "CDW_Data"
-min_point = 0
-max_point = 0
 # Variables related to peaks
 peaks = []
 latticeSpacing = 0
@@ -30,6 +29,8 @@ FTHeight = 505
 FTImgWidth = 505
 FTImgHeight = 505
 
+braggFilteredData_return_type = "Phase"
+
 pi = np.pi
 sqrt = np.sqrt
 
@@ -39,6 +40,10 @@ def createDataImage(data):
 	# Create window for drawing
 	size_x = len(data[0])
 	size_y = len(data)
+
+	# Determine data value corresponding to white in CDW image
+	max_point = max(max(line) for line in data)
+	min_point = min(min(line) for line in data)
 
 	# Draw data
 	img = NewImage.new("RGB", (size_x, size_y))
@@ -106,35 +111,6 @@ def retTriangulation(jMatrix,n_peaks,size_x,size_y):
 
 	return bondMatrix
 
-# # Return a 2D array of the Fourier transformed image in k-space
-# #   The limits of the 2D array are always [-4pi/a, 4pi/a] in both the k_x and k_y directions
-# #   FTWidth and FTHeight correspond to the resolution you want in the Fourier transform
-# #   To confirm, this means the center of the image corresponds to k = (0,0)
-# def retFT(peaks,latticeSpacing):
-# 	global FTImgWidth, FTImgHeight
-# 	noFT = not os.path.exists(filename+"_ReciprocalLattice.csv") or not os.path.exists(filename+"_ReciprocalLattice_Im.csv")
-
-# 	if noFT:
-# 		return findFT(filename,peaks,size_x,size_y,latticeSpacing,FTWidth,FTHeight)
-
-# 	rec_data_re = []
-# 	rec_data_im = []
-# 	with open(filename+"_ReciprocalLattice.csv",newline='') as file:
-# 		reader = csv.reader(file,delimiter=',',quotechar='|')
-# 		for row in reader:
-# 			for i,x in enumerate(row):
-# 				row[i] = float(x)
-# 			rec_data_re.append(row)
-
-# 	with open(filename+"_ReciprocalLattice_Im.csv",newline='') as file:
-# 		reader = csv.reader(file,delimiter=',',quotechar='|')
-# 		for row in reader:
-# 			for i,x in enumerate(row):
-# 				row[i] = float(x)
-# 			rec_data_im.append(row)
-
-# 	return rec_data_re, rec_data_im
-
 # Return an image that shows the Fourier transform in k-space
 def FTImage(rec_data,num_peaks,return_type,extension):
 	global FTImgWidth, FTImgHeight
@@ -142,14 +118,11 @@ def FTImage(rec_data,num_peaks,return_type,extension):
 	createRecDataImage(filename,rec_data,num_peaks,FTImgWidth,FTImgHeight,return_type,extension)
 
 	if return_type == "Re":
-		img = NewImage.open(filename+"_"+extension+".gif")
+		img = Image(Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0)), filename+"_"+extension+"_Re.gif")
 	elif return_type == "Im":
-		img = NewImage.open(filename+"_"+extension+"_Im.gif")
+		img = Image(Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0)), filename+"_"+extension+"_Im.gif")
 	elif return_type == "Mag":
-		img = NewImage.open(filename+"_"+extension+"_Mag.gif")
-	img = img.resize((FTImgWidth,FTImgHeight),NewImage.ANTIALIAS)
-	img.save(filename+"_"+extension+"Scaled.gif","gif")
-	img = Image(Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0)), filename+"_FTScaled.gif")
+		img = Image(Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0)), filename+"_"+extension+"_Mag.gif")
 
 	return img
 
@@ -174,13 +147,17 @@ def IFTImage(braggFilteredData,return_type):
 	return img
 
 def main():
-	global filename, scale
+	global filename, scale, braggFilteredData_return_type
 	if len(sys.argv) > 1:
 		filename = sys.argv[1]
 	if len(sys.argv) > 2:
 		scale = float(sys.argv[2])
+	if len(sys.argv) > 3:
+		braggFilteredData_return_type = sys.argv[3]
 	if not os.path.isdir(filename):
 		filename = "TestCDW_512px"
+	if braggFilteredData_return_type not in ["Re","Im","Mag","Phase"]:
+		braggFilteredData_return_type = "Phase"
 	os.chdir(filename)
 	data = np.loadtxt(filename+".txt")
 
@@ -188,11 +165,6 @@ def main():
 	global size_x, size_y
 	size_x = len(data[0])
 	size_y = len(data)
-
-	# Determine data value corresponding to white in CDW image
-	global max_point, min_point
-	max_point = max(max(line) for line in data)
-	min_point = min(min(line) for line in data)
 
 	# Show CDW images
 	global win
@@ -235,25 +207,20 @@ def main():
 				total_bonds += 1
 				latticeSpacing += sqrt((x2-x)**2 + (y2-y)**2)
 	latticeSpacing /= total_bonds
-	# print(latticeSpacing)
 
 	# Generate and show Fourier transform
 	global FTWidth, FTHeight
 	global FTImgWidth, FTImgHeight
-	rec_data = findFT(filename,peaks,size_x,size_y,latticeSpacing,FTWidth,FTHeight)
+	rec_data = findFT(filename,peaks,size_x,size_y,FTWidth,FTHeight)
 	imgFT = FTImage(rec_data,num_peaks,"Mag","FT")
 	winFT = GraphWin('CDW Data - Fourier Transform', FTImgWidth, FTImgHeight)
 	imgFT.draw(winFT)
 
 	maskCenter = winFT.getMouse()
-	print(sqrt((maskCenter.getX()-FTImgWidth/2.0)**2+(maskCenter.getY()-FTImgHeight/2.0)**2))
-	print(sqrt((maskCenter.getX()-FTImgWidth/2.0)**2+(maskCenter.getY()-FTImgHeight/2.0)**2)*latticeSpacing)
-	kx_center = 8.0*pi*(maskCenter.getX()-FTImgWidth/2.0)/FTImgWidth/latticeSpacing
-	ky_center = 8.0*pi*(maskCenter.getY()-FTImgHeight/2.0)/FTImgHeight/latticeSpacing
+	G_x = 4*pi*(maskCenter.getX()-FTImgWidth/2.0)/FTImgWidth/sqrt(3)
+	G_y = 4*pi*(maskCenter.getY()-FTImgHeight/2.0)/FTImgHeight/sqrt(3)
 	print(latticeSpacing)
-	print(4*pi/sqrt(3)/sqrt(kx_center**2+ky_center**2))
-	kx_center = 8.0*pi*(maskCenter.getX()-FTImgWidth/2.0)/FTImgWidth/latticeSpacing
-	ky_center = 8.0*pi*(maskCenter.getY()-FTImgHeight/2.0)/FTImgHeight/latticeSpacing
+	print(4*pi/sqrt(3)/sqrt(G_x**2+G_y**2))
 	graphCenter = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
 	ln = Line(graphCenter,maskCenter)
 	ln.setOutline(color_rgb(0,128,255))
@@ -265,7 +232,7 @@ def main():
 
 	maskRadiusEndpoint = winFT.getMouse()
 	maskRadius = sqrt((maskRadiusEndpoint.getX()-maskCenter.getX())**2+(maskRadiusEndpoint.getY()-maskCenter.getY())**2)
-	radius = 8.0*pi*maskRadius/FTImgWidth/latticeSpacing
+	radius = 4*pi*maskRadius/sqrt(FTImgWidth**2+FTImgHeight**2)/sqrt(3)
 	mark = Circle(maskCenter,int(maskRadius))
 	mark.setOutline(color_rgb(255,255,0))
 	mark.draw(winFT)
@@ -275,12 +242,12 @@ def main():
 
 	# Apply mask on the Fourier Transform
 	mask = stepFTMask
-	rec_data_masked = mask(rec_data, latticeSpacing, kx_center, ky_center, radius)
+	rec_data_masked = mask(rec_data, G_x, G_y, radius)
 	imgFT_masked = FTImage(rec_data_masked,num_peaks,"Mag","FT_masked")
 
 	# Generate and show Fourier transform
-	braggFilteredData = findInvFT(filename,rec_data_masked,latticeSpacing,size_x,size_y)
-	imgIFT = IFTImage(braggFilteredData,"Phase")
+	braggFilteredData = findInvFT(filename,rec_data_masked,size_x,size_y)
+	imgIFT = IFTImage(braggFilteredData,braggFilteredData_return_type)
 	winIFT = GraphWin('CDW Data - Inverse Fourier Transform', int(size_x*scale), int(size_y*scale))
 	imgIFT.draw(winIFT)
 	winIFT.getMouse()

@@ -80,7 +80,7 @@ def retFT(peaks,latticeSpacing):
 	noFT = not os.path.exists(filename+"_ReciprocalLattice.csv") or not os.path.exists(filename+"_ReciprocalLattice_Im.csv")
 
 	if noFT:
-		return findFT(filename,peaks,size_x,size_y,latticeSpacing,FTWidth,FTHeight)
+		return findFT(filename,peaks,size_x,size_y,FTWidth,FTHeight)
 
 	rec_data_re = []
 	rec_data_im = []
