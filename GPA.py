@@ -9,7 +9,7 @@ from PIL import Image as NewImage
 
 from modules.bondFunctions import *
 from modules.reciprocalLattice import *
-from modules.hycht.py import *
+from modules.hycht import *
 
 # Declaring global variables_____________________
 filename = "CDW_Data"
@@ -137,7 +137,7 @@ def IFTImage(braggFilteredData,return_type):
 	elif return_type == "Im":
 		img = NewImage.open(filename+"_BraggFiltered_Im.gif")
 	elif return_type == "Phase":
-		img = NewImage.open(filename+"_BraggFiltered_Phase.gif")
+		img = NewImage.open(filename+"_BraggFiltered_RawPhase.gif")
 	else: # return_type == "Mag" by default
 		img = NewImage.open(filename+"_BraggFiltered_Mag.gif")
 	img = img.resize((int(size_x*scale),int(size_y*scale)),NewImage.ANTIALIAS)
@@ -267,13 +267,13 @@ def main():
 
 	# Generate phase image
 
-	# Generate displacement image
-	displacementData = findDisplacementData(filename,phaseData,size_x,size_y)
-	imgDisplacementField = fieldImage(displacementData,"DisplacementField")
-	winDisplacementField = GraphWin('Displacement Field', int(size_x*scale), int(size_y*scale))
-	imgDisplacementField.draw(winDisplacementField)
-	winDisplacementField.getMouse()
-	winDisplacementField.close()
+	# # Generate displacement image
+	# displacementData = findDisplacementData(filename,phaseData,size_x,size_y)
+	# imgDisplacementField = fieldImage(displacementData,"DisplacementField")
+	# winDisplacementField = GraphWin('Displacement Field', int(size_x*scale), int(size_y*scale))
+	# imgDisplacementField.draw(winDisplacementField)
+	# winDisplacementField.getMouse()
+	# winDisplacementField.close()
 
 	win.getMouse()
 	win.close()
