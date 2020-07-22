@@ -146,6 +146,18 @@ def IFTImage(braggFilteredData,return_type):
 
 	return img
 
+def fieldImage(fieldData,extension):
+	global size_x, size_y, scale
+
+	createFieldImage(filename,fieldData,extension,size_x,size_y)
+
+	img = NewImage.open(filename+"_"+extension+"Field.gif")
+	img = img.resize((int(size_x*scale),int(size_y*scale)),NewImage.ANTIALIAS)
+	img.save(filename+"_"+extension+"Field_Scaled.gif","gif")
+	img = Image(Point(int(size_x*scale/2.0),int(size_y*scale/2.0)), filename+"_"+extension+"Field_Scaled.gif")
+
+	return img
+
 def main():
 	global filename, scale, braggFilteredData_return_type
 	if len(sys.argv) > 1:
@@ -252,6 +264,16 @@ def main():
 	imgIFT.draw(winIFT)
 	winIFT.getMouse()
 	winIFT.close()
+
+	# Generate phase image
+
+	# Generate displacement image
+	displacementData = findDisplacementData(filename,phaseData,size_x,size_y)
+	imgDisplacementField = fieldImage(displacementData,"DisplacementField")
+	winDisplacementField = GraphWin('Displacement Field', int(size_x*scale), int(size_y*scale))
+	imgDisplacementField.draw(winDisplacementField)
+	winDisplacementField.getMouse()
+	winDisplacementField.close()
 
 	win.getMouse()
 	win.close()

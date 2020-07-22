@@ -181,7 +181,7 @@ def findInvFT(filename,rec_data,size_x,size_y):
 		for row in data_mag:
 			wr.writerow(row)
 
-	with open(filename+"_BraggFilteredData_Phase.csv", 'w',newline='') as f:
+	with open(filename+"_BraggFilteredData_RawPhase.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
 		for row in data_phase:
 			wr.writerow(row)
@@ -252,14 +252,14 @@ def createReconstructedImage(filename,braggFilteredData,size_x,size_y,return_typ
 	img_Re.save(filename+"_BraggFiltered_Re.gif",'gif')
 	img_Im.save(filename+"_BraggFiltered_Im.gif",'gif')
 	img_Mag.save(filename+"_BraggFiltered_Mag.gif",'gif')
-	img_Phase.save(filename+"_BraggFiltered_Phase.gif",'gif')
+	img_Phase.save(filename+"_BraggFiltered_RawPhase.gif",'gif')
 
 	if return_type == "Re":
 		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Re.gif")
 	elif return_type == "Im":
 		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Im.gif")
 	elif return_type == "Phase":
-		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Phase.gif")
+		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_RawPhase.gif")
 	else: # return_type == "Mag" by default
 		img = Image(Point(int(size_x/2),int(size_y/2)), filename+"_BraggFiltered_Mag.gif")
 

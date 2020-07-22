@@ -19,7 +19,7 @@ exp = np.exp
 
 # SKANDA
 
-def findPhaseImg(filename,size_x,size_y,G_x,G_y):
+def findPhaseData(filename,size_x,size_y,G_x,G_y):
 	data = [[0 for x in range(size_x)] for y in range(size_y)]
 	for peak in peaks:
 		x,y = peak
@@ -43,9 +43,9 @@ def findPhaseImg(filename,size_x,size_y,G_x,G_y):
 # DAN
 
 # Save displacement image data as a size_x by size_y csv file and return an array including the data. One of the inputs should be the phase image, I'll work on that
-def findDisplacementData(filename,size_x,size_y):
+def findDisplacementData(filename,phaseData,size_x,size_y):
 	return 0
 
-# Create, save, and return an image to display the displacement image in a graphics window
-def createDisplacementImage():
-	return 0 
+# Create, save, and return an image for any real field in a graphics window
+def createFieldImage(filename,fieldData,extension,size_x,size_y):
+	return 0
