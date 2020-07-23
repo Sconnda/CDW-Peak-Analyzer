@@ -149,7 +149,6 @@ def phase(re,im):
 	return atan2(im,re)
 
 def findInvFT(filename,rec_data,extension,size_x,size_y):
-
 	rec_data_re = np.array(rec_data[0])
 	rec_data_im = np.array(rec_data[1])
 	rec_data = rec_data_re + 1j*rec_data_im
@@ -239,8 +238,8 @@ def createReconstructedImage(filename,braggFilteredData,size_x,size_y,return_typ
 
 	# PHASE IMAGE__________________
 	# Find extrema
-	min_point_Phase = min(min(braggFilteredData_Phase))
-	max_point_Phase = max(max(braggFilteredData_Phase))
+	min_point_Phase = -pi
+	max_point_Phase = pi
 	# Draw data
 	img_Phase = NewImage.new("RGB", (size_x, size_y))
 	putpixel = img_Phase.putpixel

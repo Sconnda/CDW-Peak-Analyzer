@@ -212,14 +212,14 @@ def IFTImage(braggFilteredData,return_type,extension):
 	return img
 
 def fieldImage(fieldData,extension):
-	global size_x, size_y, scale
+	global filename, size_x, size_y, scale
 
 	createFieldImage(filename,fieldData,extension,size_x,size_y)
 
-	img = NewImage.open(filename+"_"+extension+"Field.gif")
+	img = NewImage.open(filename+"_"+extension+".gif")
 	img = img.resize((int(size_x*scale),int(size_y*scale)),NewImage.ANTIALIAS)
-	img.save(filename+"_"+extension+"Field_Scaled.gif","gif")
-	img = Image(Point(int(size_x*scale/2.0),int(size_y*scale/2.0)), filename+"_"+extension+"Field_Scaled.gif")
+	img.save(filename+"_"+extension+"_Scaled.gif","gif")
+	img = Image(Point(int(size_x*scale/2.0),int(size_y*scale/2.0)), filename+"_"+extension+"_Scaled.gif")
 
 	return img
 
@@ -290,14 +290,14 @@ def main():
 	G1, G2 = G
 
 	# Generate and show Bragg filtered data for both values of g
-	braggFilteredData1 = findInvFT(filename,rec_data_masked1,"BraggFilteredData1",size_x,size_y)
+	braggFilteredData1 = findInvFT(filename,rec_data_masked1,"BraggFiltered1",size_x,size_y)
 	imgIFT1 = IFTImage(braggFilteredData1,braggFilteredData_return_type,"BraggFiltered1")
 	winIFT1 = GraphWin('Bragg Filtered Data: g1', int(size_x*scale), int(size_y*scale))
 	imgIFT1.draw(winIFT1)
 	winIFT1.getMouse()
 	winIFT1.close()
 
-	braggFilteredData2 = findInvFT(filename,rec_data_masked2,"BraggFilteredData2",size_x,size_y)
+	braggFilteredData2 = findInvFT(filename,rec_data_masked2,"BraggFiltered2",size_x,size_y)
 	imgIFT2 = IFTImage(braggFilteredData2,braggFilteredData_return_type,"BraggFiltered2")
 	winIFT2 = GraphWin('Bragg Filtered Data: g2', int(size_x*scale), int(size_y*scale))
 	imgIFT2.draw(winIFT2)
@@ -305,10 +305,14 @@ def main():
 	winIFT2.close()
 
 	# Generate phase image
+	phaseData1 = findPhaseData(filename,size_x,size_y,G1,"BraggFiltered1")
+	phaseData2 = findPhaseData(filename,size_x,size_y,G2,"BraggFiltered2")
+	imgPhaseField1 = fieldImage(phaseData1,"BraggFiltered1_Phase")
+	imgPhaseField2 = fieldImage(phaseData2,"BraggFiltered2_Phase")
 
 	# # Generate displacement image
 	# displacementData = findDisplacementData(filename,phaseData,size_x,size_y)
-	# imgDisplacementField = fieldImage(displacementData,"DisplacementField")
+	# imgDisplacementField = fieldImage(displacementData,"DisplacementField1")
 	# winDisplacementField = GraphWin('Displacement Field', int(size_x*scale), int(size_y*scale))
 	# imgDisplacementField.draw(winDisplacementField)
 	# winDisplacementField.getMouse()

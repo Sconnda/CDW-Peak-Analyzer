@@ -19,26 +19,28 @@ exp = np.exp
 
 # SKANDA
 
-def findPhaseData(filename,size_x,size_y,G_x,G_y):
-	data = [[0 for x in range(size_x)] for y in range(size_y)]
-	for peak in peaks:
-		x,y = peak
-		x = min(int(round(x)),size_x-1)
-		y = min(int(round(y)),size_y-1)
-		data[y][x] = 1
+def findPhaseData(filename,size_x,size_y,G,extension):
+	G_x = G[0]
+	G_y = G[1]
+	rawPhaseData = []
+	with open(filename+"_"+extension+"_RawPhase.csv",newline='') as file:
+		reader = csv.reader(file,delimiter=',',quotechar='|')
+		for row in reader:
+			for i,x in enumerate(row):
+				row[i] = float(x)
+			rawPhaseData.append(row)
+	rawPhaseData = np.array(rawPhaseData)
 
+	X,Y = np.mgrid[0:size_x:1, 0:size_y:1]
 
-	with open(filename+"_ReciprocalLattice.csv", 'w',newline='') as f:
+	phaseData = (rawPhaseData-2*pi*G_x*X-2*pi*G_y*Y+pi)%(2*pi)-pi
+
+	with open(filename+"_"+extension+"_Phase.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
-		for row in rec_data_re:
+		for row in phaseData:
 			wr.writerow(row)
 
-	with open(filename+"_ReciprocalLattice_Im.csv", 'w',newline='') as f:
-		wr = csv.writer(f)
-		for row in rec_data_im:
-			wr.writerow(row)
-
-	return rec_data_re, rec_data_im
+	return phaseData
 
 # DAN
 
@@ -48,4 +50,26 @@ def findDisplacementData(filename,phaseData,size_x,size_y):
 
 # Create, save, and return an image for any real field in a graphics window
 def createFieldImage(filename,fieldData,extension,size_x,size_y):
-	return 0
+	field = []
+	with open(filename+"_"+extension+".csv",newline='') as file:
+		reader = csv.reader(file,delimiter=',',quotechar='|')
+		for row in reader:
+			for i,x in enumerate(row):
+				row[i] = float(x)
+			field.append(row)
+
+	# Find extrema
+	min_point = -pi
+	max_point = pi
+
+	# Draw data
+	img = NewImage.new("RGB", (size_x, size_y))
+	putpixel = img.putpixel
+	for y in range(size_y):
+		for x in range(size_x):
+			color = int((field[y][x]-min_point)/(max_point-min_point)*255)
+			putpixel((x,y),(color,color,color))
+
+	img.save(filename+"_"+extension+".gif",'gif')
+
+	return img
