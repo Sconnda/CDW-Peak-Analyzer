@@ -45,7 +45,25 @@ def findPhaseData(filename,size_x,size_y,G,extension):
 # DAN
 
 # Save displacement image data as a size_x by size_y csv file and return an array including the data. One of the inputs should be the phase image, I'll work on that
-def findDisplacementData(filename,phaseData,size_x,size_y):
+def findDisplacementData(filename,phaseData,size_x,size_y,g1,g2):
+        
+        #dummy g1 and g2 for now
+        g1 = np.array([[15],[13]])
+        g2 = np.array([[7],[4]])
+
+        #make a g matrix
+        gMatrix = np.concatenate((g1,g2),axis=1)
+        
+        #transpose and invert it according to the paper to get the a matrix
+        gMatrixTranspose = np.transpose(gMatrix)
+        aMatrix = np.linalg.inv(gMatrixTranspose)
+
+        #seperate a1 and a2 vectors
+        a1 = np.array([[aMatrix[0,0]],[aMatrix[1,0]]])
+        a2 = np.array([[aMatrix[0,1]],[aMatrix[1,1]]])
+
+        
+
 	return 0
 
 # Create, save, and return an image for any real field in a graphics window
