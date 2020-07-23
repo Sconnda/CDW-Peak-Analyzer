@@ -211,15 +211,23 @@ def IFTImage(braggFilteredData,return_type,extension):
 
 	return img
 
-def fieldImage(fieldData,extension):
+def fieldImage(fieldData,folder,extension):
 	global filename, size_x, size_y, scale
 
-	createFieldImage(filename,fieldData,extension,size_x,size_y)
+	if not os.path.isdir(folder):
+		os.mkdir(folder)
 
-	img = NewImage.open(filename+"_"+extension+".gif")
+	createFieldImage(filename,fieldData,folder,extension,size_x,size_y)
+
+	img = NewImage.open(folder+"/"+filename+"_"+folder+"_"+extension+".gif")
 	img = img.resize((int(size_x*scale),int(size_y*scale)),NewImage.ANTIALIAS)
-	img.save(filename+"_"+extension+"_Scaled.gif","gif")
-	img = Image(Point(int(size_x*scale/2.0),int(size_y*scale/2.0)), filename+"_"+extension+"_Scaled.gif")
+	img.save(folder+"/"+filename+"_"+folder+"_"+extension+"_Scaled.gif","gif")
+	img = Image(Point(int(size_x*scale/2.0),int(size_y*scale/2.0)), folder+"/"+filename+"_"+folder+"_"+extension+"_Scaled.gif")
+
+	winField = GraphWin(folder+": "+extension, int(size_x*scale), int(size_y*scale))
+	img.draw(winField)
+	winField.getMouse()
+	winField.close()
 
 	return img
 
@@ -307,8 +315,16 @@ def main():
 	# Generate phase image
 	phaseData1 = findPhaseData(filename,size_x,size_y,G1,"BraggFiltered1")
 	phaseData2 = findPhaseData(filename,size_x,size_y,G2,"BraggFiltered2")
-	imgPhaseField1 = fieldImage(phaseData1,"BraggFiltered1_Phase")
-	imgPhaseField2 = fieldImage(phaseData2,"BraggFiltered2_Phase")
+	imgPhaseField1 = fieldImage(phaseData1,"BraggFiltered1","Phase")
+	imgPhaseField2 = fieldImage(phaseData2,"BraggFiltered2","Phase")
+
+	# Generate g(r)
+	gR_Data1 = find_gR_Data(filename,size_x,size_y,"BraggFiltered1")
+	gR_Data2 = find_gR_Data(filename,size_x,size_y,"BraggFiltered2")
+	img_gR_Field1_x = fieldImage(gR_Data1[0],"BraggFiltered1","g(r)_x")
+	img_gR_Field1_y = fieldImage(gR_Data1[1],"BraggFiltered1","g(r)_y")
+	img_gR_Field2_x = fieldImage(gR_Data2[0],"BraggFiltered2","g(r)_x")
+	img_gR_Field2_y = fieldImage(gR_Data2[1],"BraggFiltered2","g(r)_y")
 
 	# # Generate displacement image
 	# displacementData = findDisplacementData(filename,phaseData,size_x,size_y)
