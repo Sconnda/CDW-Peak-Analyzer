@@ -285,12 +285,12 @@ def main():
 	# latticeSpacing = 0
 	# total_bonds = 0
 	# for i,peak in enumerate(peaks):
-	# 	x,y = peak
-	# 	for j,bonded in enumerate(bondMatrix[i]):
-	# 		if bonded == 1:
-	# 			x2,y2 = peaks[j]
-	# 			total_bonds += 1
-	# 			latticeSpacing += sqrt((x2-x)**2 + (y2-y)**2)
+	#	x,y = peak
+	#	for j,bonded in enumerate(bondMatrix[i]):
+	#		if bonded == 1:
+	#			x2,y2 = peaks[j]
+	#			total_bonds += 1
+	#			latticeSpacing += sqrt((x2-x)**2 + (y2-y)**2)
 	# latticeSpacing /= total_bonds
 
 	rec_data_masked,G = selectG(peaks,num_peaks)
@@ -327,12 +327,12 @@ def main():
 	img_gR_Field2_y = fieldImage(gR_Data2[1],"BraggFiltered2","g(r)_y")
 
 	# # Generate displacement image
-	# displacementData = findDisplacementData(filename,phaseData,size_x,size_y)
-	# imgDisplacementField = fieldImage(displacementData,"DisplacementField1")
-	# winDisplacementField = GraphWin('Displacement Field', int(size_x*scale), int(size_y*scale))
-	# imgDisplacementField.draw(winDisplacementField)
-	# winDisplacementField.getMouse()
-	# winDisplacementField.close()
+	displacementDataX, displacementDataY = findDisplacementData(filename,"BraggFiltered1","BraggFiltered2",G1,G2)
+	
+	imgDisplacementFieldX = fieldImage(displacementDataX,"BraggFiltered1","DisplacementFieldX")
+	imgDisplacementFieldY = fieldImage(displacementDataY,"BraggFiltered1","DisplacementFieldY")
+
+
 
 	win.getMouse()
 	win.close()

@@ -98,14 +98,33 @@ def find_gR_Data(filename,size_x,size_y,extension):
 # DAN
 
 # Save displacement image data as a size_x by size_y csv file and return an array including the data. One of the inputs should be the phase image, I'll work on that
-def findDisplacementData(filename,phaseData,size_x,size_y,g1,g2):
+def findDisplacementData(filename,extension1,extension2,g1,g2):
         
+
+        PhaseData1 = []
+        with open(filename+"_"+extension1+"_Phase.csv",newline='') as file:
+            reader = csv.reader(file,delimiter=',',quotechar='|')
+            for row in reader:
+                for i,x in enumerate(row):
+                    row[i] = float(x)
+                PhaseData1.append(row)
+        
+        PhaseData2 = []
+        with open(filename+"_"+extension2+"_Phase.csv",newline='') as file:
+            reader = csv.reader(file,delimiter=',',quotechar='|')
+            for row in reader:
+                for i,x in enumerate(row):
+                    row[i] = float(x)
+                PhaseData2.append(row)
+
+
+
         #dummy g1 and g2 for now
-        g1 = np.array([[15],[13]])
-        g2 = np.array([[7],[4]])
+        #g1 = np.array([[15],[13]])
+        #g2 = np.array([[7],[4]])
 
         #make a g matrix
-        gMatrix = np.concatenate((g1,g2),axis=1)
+        gMatrix = np.vstack((g1,g2))
         
         #transpose and invert it according to the paper to get the a matrix
         gMatrixTranspose = np.transpose(gMatrix)
@@ -117,7 +136,25 @@ def findDisplacementData(filename,phaseData,size_x,size_y,g1,g2):
 
         
 
-	return 0
+        #calculate the displacement field x and y components 
+        displacementFieldX = a1[0]*PhaseData1+a2[0]*PhaseData2
+        displacementFieldY = a1[1]*PhaseData1+a2[1]*PhaseData2
+
+        #save them as a csv file, there is only 1 extension because the displacement field is a property of the lattice not the g vector, I just picked extension1 arbitrarily
+        with open(filename+"_"+extension1+"_DisplacementFieldX.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in displacementFieldX:
+                wr.writerow(row)
+
+        with open(filename+"_"+extension1+"_DisplacementFieldY.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in displacementFieldY:
+                wr.writerow(row)
+
+        print(displacementFieldX)
+
+
+        return displacementFieldX, displacementFieldY
 
 # Create, save, and return an image for any real field in a graphics window
 def createFieldImage(filename,fieldData,folder,extension,size_x,size_y):
@@ -130,8 +167,8 @@ def createFieldImage(filename,fieldData,folder,extension,size_x,size_y):
 			field.append(row)
 
 	# Find extrema
-	min_point = -pi
-	max_point = pi
+	min_point = -2*pi
+	max_point = 2*pi
 
 	# Draw data
 	img = NewImage.new("RGB", (size_x, size_y))
