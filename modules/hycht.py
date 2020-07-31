@@ -9,6 +9,8 @@ import csv
 
 from graphics import *
 from PIL import Image as NewImage
+from PIL import ImageDraw as NewImageDraw
+from PIL import ImageFont as NewImageFont
 
 pi = np.pi
 sqrt = np.sqrt
@@ -31,7 +33,7 @@ def findPhaseData(filename,size_x,size_y,G,extension):
 			rawPhaseData.append(row)
 	rawPhaseData = np.array(rawPhaseData)
 
-	X,Y = np.mgrid[0:size_x:1, 0:size_y:1]
+	Y,X = np.mgrid[0:size_y:1, 0:size_x:1]
 
 	# Y = np.flip(Y,1)
 
@@ -151,9 +153,6 @@ def findDisplacementData(filename,extension1,extension2,g1,g2):
             for row in displacementFieldY:
                 wr.writerow(row)
 
-        print(displacementFieldX)
-
-
         return displacementFieldX, displacementFieldY
 
 # Create, save, and return an image for any real field in a graphics window
@@ -167,12 +166,17 @@ def createFieldImage(filename,fieldData,folder,extension,size_x,size_y):
 			field.append(row)
 
 	# Find extrema
-	min_point = -2*pi
-	max_point = 2*pi
+	if extension == "Phase":
+		min_point = -2*pi
+		max_point = 2*pi
+	else:
+		min_point = min(min(field))
+		max_point = max(max(field))
 
 	# Draw data
 	img = NewImage.new("RGB", (size_x, size_y))
 	putpixel = img.putpixel
+
 	for y in range(size_y):
 		for x in range(size_x):
 			color = int((field[y][x]-min_point)/(max_point-min_point)*255)

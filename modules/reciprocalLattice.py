@@ -26,10 +26,10 @@ def findFT(filename,peaks,size_x,size_y, width, height):
 		y = min(int(round(y)),size_y-1)
 		data[y][x] = 1
 
-	# data = np.loadtxt(filename+".txt")
-	# data_list = data.tolist()
-	# min_data = min(min(data_list))
-	# data += min_data
+	data = np.loadtxt(filename+".txt")
+	data_list = data.tolist()
+	min_data = min(min(data_list))
+	data += min_data
 
 	rec_data = np.fft.fft2(data)
 	rec_data = np.fft.fftshift(rec_data)
@@ -56,9 +56,9 @@ def stepFTMask(rec_data, kx_center, ky_center, radius):
 	rec_data_filtered_re = [[0 for x in range(width)] for y in range(height)]
 	rec_data_filtered_im = [[0 for x in range(width)] for y in range(height)]
 	for i in range(height):
-		ky = 4.0*pi*(i-height/2.0)/height/sqrt(3)
+		ky = (i-height/2.0)/height
 		for j in range(width):
-			kx = 4.0*pi*(j-width/2.0)/width/sqrt(3)
+			kx = (j-width/2.0)/width
 			if (kx-kx_center)**2+(ky-ky_center)**2 < radius**2:
 				rec_data_filtered_re[i][j] = rec_data_re[i][j]
 				rec_data_filtered_im[i][j] = rec_data_im[i][j]
@@ -81,7 +81,7 @@ def gaussianFTMask(rec_data, kx_center, ky_center, radius):
 	return rec_data_filtered_re,rec_data_filtered_im
 
 def highPassFilterMask(kxSc,kySc):
-	return (1-exp(-pi*(kxSc**2+kySc**2)/0.1))
+	return (1-exp(-pi*(kxSc**2+kySc**2)/0.001))
 
 def globalFTFilter(rec_data):
 	width = len(rec_data[0])

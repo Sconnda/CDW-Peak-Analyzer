@@ -26,8 +26,9 @@ scale = 1
 #   FTImgWidth and FTImgHeight are simply the size of the display window for the Fourier transform
 FTWidth = 505
 FTHeight = 505
-FTImgWidth = 505
-FTImgHeight = 505
+FTImgWidth = 750
+FTImgHeight = 750
+searchSize = 6
 
 braggFilteredData_return_type = "Phase"
 
@@ -126,6 +127,48 @@ def FTImage(rec_data,num_peaks,return_type,extension):
 
 	return img
 
+# def peakWindow(local_data):
+# 	min_point = min(min(local_data))
+# 	max_point = max(max(local_data))
+# 	width = len(local_data[0])
+# 	height = len(local_data)
+# 	img = NewImage.new("RGB", (500, 500))
+# 	putpixel = img.putpixel
+# 	for y in range(500):
+# 		for x in range(500):
+# 			color = int((local_data[int(y*height/500)][int(x*width/500)]-min_point)/(max_point-min_point)*255)
+# 			putpixel((x,y),(color,color,color))
+# 	img.show()
+
+def brightestPeak(mouse, rec_data):
+	x0 = int(size_x*mouse.getX()/FTImgWidth)
+	y0 = int(size_y*mouse.getY()/FTImgHeight)
+	filtered_rec_data = globalFTFilter(rec_data)
+	peak = rec_data[y0][x0]
+	x = x0
+	y = y0
+	local_data = [[0 for x in range(searchSize)] for y in range(searchSize)]
+	for i in range(searchSize):
+		dy = i-int(searchSize/2)
+		y_temp = y0+dy
+		for j in range(searchSize):
+			dx = j-int(searchSize/2)
+			x_temp = x0+dx
+			if x_temp >= size_x or x_temp < 0:
+				continue
+			if y_temp >= size_y or x_temp < 0:
+				continue
+			peak_temp = rec_data[y_temp][x_temp]
+			local_data[i][j] = filtered_rec_data[y_temp][x_temp]
+			if peak_temp > peak:
+				peak = peak_temp
+				x = x_temp
+				y = y_temp
+
+	# peakWindow(local_data)
+
+	return Point(FTImgWidth*x/size_x,FTImgHeight*y/size_y)
+
 # Return two masked FT images
 def selectG(peaks,num_peaks):
 	global filename, size_x, size_y
@@ -133,15 +176,19 @@ def selectG(peaks,num_peaks):
 	global FTImgWidth, FTImgHeight
 
 	rec_data = findFT(filename,peaks,size_x,size_y,FTWidth,FTHeight)
+	rec_data_mag = [[0 for x in range(size_x)] for y in range(size_y)]
+	for i in range(size_y):
+		for j in range(size_x):
+			rec_data_mag[i][j] = sqrt(rec_data[0][i][j]**2+rec_data[1][i][j]**2)
+
 	imgFT = FTImage(rec_data,num_peaks,"Mag","FT")
 	winFT = GraphWin('Fourier Transform', FTImgWidth, FTImgHeight)
 	imgFT.draw(winFT)
 
 	maskCenter1 = winFT.getMouse()
-	G1_x = 4*pi*(maskCenter1.getX()-FTImgWidth/2.0)/FTImgWidth/sqrt(3)
-	G1_y = 4*pi*(maskCenter1.getY()-FTImgHeight/2.0)/FTImgHeight/sqrt(3)
-	# print(latticeSpacing)
-	# print(4*pi/sqrt(3)/sqrt(G1_x**2+G1_y**2))
+	maskCenter1 = brightestPeak(maskCenter1,rec_data_mag)
+	G1_x = (maskCenter1.getX()-FTImgWidth/2.0)/FTImgWidth
+	G1_y = (maskCenter1.getY()-FTImgHeight/2.0)/FTImgHeight
 	graphCenter1 = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
 	ln1 = Line(graphCenter1,maskCenter1)
 	ln1.setOutline(color_rgb(0,128,255))
@@ -153,16 +200,17 @@ def selectG(peaks,num_peaks):
 
 	maskRadiusEndpoint1 = winFT.getMouse()
 	maskRadius1 = sqrt((maskRadiusEndpoint1.getX()-maskCenter1.getX())**2+(maskRadiusEndpoint1.getY()-maskCenter1.getY())**2)
-	radius1 = 4*pi*maskRadius1/sqrt(FTImgWidth**2+FTImgHeight**2)/sqrt(3)
+	radius1_x = (maskRadiusEndpoint1.getX()-maskCenter1.getX())/FTImgWidth
+	radius1_y = (maskRadiusEndpoint1.getY()-maskCenter1.getY())/FTImgHeight
+	radius1 = sqrt(radius1_x**2+radius1_y**2)
 	mark1 = Circle(maskCenter1,int(maskRadius1))
 	mark1.setOutline(color_rgb(255,255,0))
 	mark1.draw(winFT)
 
 	maskCenter2 = winFT.getMouse()
-	G2_x = 4*pi*(maskCenter2.getX()-FTImgWidth/2.0)/FTImgWidth/sqrt(3)
-	G2_y = 4*pi*(maskCenter2.getY()-FTImgHeight/2.0)/FTImgHeight/sqrt(3)
-	# print(latticeSpacing)
-	# print(4*pi/sqrt(3)/sqrt(G2_x**2+G2_y**2))
+	maskCenter2 = brightestPeak(maskCenter2,rec_data_mag)
+	G2_x = (maskCenter2.getX()-FTImgWidth/2.0)/FTImgWidth
+	G2_y = (maskCenter2.getY()-FTImgHeight/2.0)/FTImgHeight
 	graphCenter2 = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
 	ln2 = Line(graphCenter2,maskCenter2)
 	ln2.setOutline(color_rgb(0,128,255))
@@ -174,7 +222,9 @@ def selectG(peaks,num_peaks):
 
 	maskRadiusEndpoint2 = winFT.getMouse()
 	maskRadius2 = sqrt((maskRadiusEndpoint2.getX()-maskCenter2.getX())**2+(maskRadiusEndpoint2.getY()-maskCenter2.getY())**2)
-	radius2 = 4*pi*maskRadius2/sqrt(FTImgWidth**2+FTImgHeight**2)/sqrt(3)
+	radius2_x = (maskRadiusEndpoint2.getX()-maskCenter2.getX())/FTImgWidth
+	radius2_y = (maskRadiusEndpoint2.getY()-maskCenter2.getY())/FTImgHeight
+	radius2 = sqrt(radius2_x**2+radius2_y**2)
 	mark2 = Circle(maskCenter2,int(maskRadius2))
 	mark2.setOutline(color_rgb(255,255,0))
 	mark2.draw(winFT)
@@ -220,11 +270,11 @@ def fieldImage(fieldData,folder,extension):
 	createFieldImage(filename,fieldData,folder,extension,size_x,size_y)
 
 	img = NewImage.open(folder+"/"+filename+"_"+folder+"_"+extension+".gif")
-	img = img.resize((int(size_x*scale),int(size_y*scale)),NewImage.ANTIALIAS)
+	img = img.resize((int((size_x)*scale),int(size_y*scale)),NewImage.ANTIALIAS)
 	img.save(folder+"/"+filename+"_"+folder+"_"+extension+"_Scaled.gif","gif")
-	img = Image(Point(int(size_x*scale/2.0),int(size_y*scale/2.0)), folder+"/"+filename+"_"+folder+"_"+extension+"_Scaled.gif")
+	img = Image(Point(int((size_x)*scale/2.0),int(size_y*scale/2.0)), folder+"/"+filename+"_"+folder+"_"+extension+"_Scaled.gif")
 
-	winField = GraphWin(folder+": "+extension, int(size_x*scale), int(size_y*scale))
+	winField = GraphWin(folder+": "+extension, int((size_x)*scale), int(size_y*scale))
 	img.draw(winField)
 	winField.getMouse()
 	winField.close()
@@ -331,8 +381,6 @@ def main():
 	
 	imgDisplacementFieldX = fieldImage(displacementDataX,"BraggFiltered1","DisplacementFieldX")
 	imgDisplacementFieldY = fieldImage(displacementDataY,"BraggFiltered1","DisplacementFieldY")
-
-
 
 	win.getMouse()
 	win.close()
