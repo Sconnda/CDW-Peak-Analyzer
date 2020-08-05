@@ -155,6 +155,131 @@ def findDisplacementData(filename,extension1,extension2,g1,g2):
 
         return displacementFieldX, displacementFieldY
 
+
+def findDistortionField(filename,extension1,extension2,g1,g2,size_x,size_y)
+        
+        #begining of this is the same as findDisplacementField, this is done to avoid compounding errors by differentiating the phase instead of the displacement field
+        PhaseData1 = []
+        with open(filename+"_"+extension1+"_Phase.csv",newline='') as file:
+            reader = csv.reader(file,delimiter=',',quotechar='|')
+            for row in reader:
+                for i,x in enumerate(row):
+                    row[i] = float(x)
+                PhaseData1.append(row)
+
+
+        PhaseData2 = []
+        with open(filename+"_"+extension2+"_Phase.csv",newline='') as file:
+            reader = csv.reader(file,delimiter=',',quotechar='|')
+            for row in reader:
+                for i,x in enumerate(row):
+                    row[i] = float(x)
+                PhaseData2.append(row)
+
+        #make a g matrix
+        gMatrix = np.vstack((g1,g2))
+        
+        #transpose and invert it according to the paper to get the a matrix
+        gMatrixTranspose = np.transpose(gMatrix)
+        aMatrix = np.linalg.inv(gMatrixTranspose)
+
+        #seperate a1 and a2 vectors, 1st term is x second is y
+        a1 = np.array([[aMatrix[0,0]],[aMatrix[1,0]]])
+        a2 = np.array([[aMatrix[0,1]],[aMatrix[1,1]]])
+
+
+        #create 0 matricies to hold the derivatives
+        
+        dPg1dx = [[0 for x in range(size_x)] for y in range(size_y)]
+        dPg1dy = [[0 for x in range(size_x)] for y in range(size_y)]
+        dPg2dx = [[0 for x in range(size_x)] for y in range(size_y)]
+        dPg2dy = [[0 for x in range(size_x)] for y in range(size_y)]
+
+
+        #basically a modified gradient to match appendix D of hycht paper one for g1 phase data and one for g2 phasedata
+        
+        #g1 stuff
+        for y in range(size_y):
+            for x in range(size_x):
+                 
+                dpdx = 0
+                dpdy = 0
+
+                if x == 0:
+                    dpdx = sin(PhaseData1[y][1]-PhaseData1[y][0])
+                elif x == size_x-1:
+                    dpdx = -sin(PhaseData1[y][x-1]-PhaseData1[y][x])
+                else:
+                    dpdx = (sin(PhaseData1[y][x+1]-PhaseData1[y][x])-sin(PhaseData1[y][x-1]-PhaseData1[y][x]))/2
+
+                if y == 0:
+                    dpdy = sin(PhaseData1[1][x]-PhaseData1[0][x])
+                elif y == size_y-1:
+                    dpdy = -sin(PhaseData1[y-1][x]-PhaseData1[y][x])
+                else:
+                    dpdy = (sin(PhaseData1[y+1][x]-PhaseData1[y][x])-sin(PhaseData1[y-1][x]-PhaseData1[y][x]))/2
+
+                dPg1dx[y][x] = dpdx
+                dPg1dy[y][x] = dpdy
+
+                if x<10 and y<10:
+                    print("G1: dpdx is " + dpdx + " dpdy is " + dpdy)
+
+
+
+
+        #g2 stuff
+        for y in range(size_y):
+            for x in range(size_x):
+                 
+                dpdx = 0
+                dpdy = 0
+
+                if x == 0:
+                    dpdx = sin(PhaseData2[y][1]-PhaseData2[y][0])
+                elif x == size_x-1:
+                    dpdx = -sin(PhaseData2[y][x-1]-PhaseData2[y][x])
+                else:
+                    dpdx = (sin(PhaseData2[y][x+1]-PhaseData2[y][x])-sin(PhaseData2[y][x-1]-PhaseData2[y][x]))/2
+
+                if y == 0:
+                    dpdy = sin(PhaseData2[1][x]-PhaseData2[0][x])
+                elif y == size_y-1:
+                    dpdy = -sin(PhaseData2[y-1][x]-PhaseData2[y][x])
+                else:
+                    dpdy = (sin(PhaseData2[y+1][x]-PhaseData2[y][x])-sin(PhaseData2[y-1][x]-PhaseData2[y][x]))/2
+
+                dPg2dx[y][x] = dpdx
+                dPg2dy[y][x] = dpdy
+
+                if x<10 and y<10:
+                    print("G2: dpdx is " + dpdx + " dpdy is " + dpdy)
+
+
+        #make a zero matrix for the distortion matrix
+        distortionField = np.zeros((2,2,size_y,size_x))
+        
+        #turn the phase derivatives into a matrix to be dotted with the amatrix
+        phaseDerivativeMatrix = np.array([[dPg1dx,dPg1dy],[dPg2dx,dPg2dy]])
+
+        
+        #calculate the distortion field and return it as a numpy array of shape (2,2,size_y,size_x)
+        for y in range(size_y):
+            for x in range(size_x):
+                distortionField[:,:,y,x] = -(1/(2*pi))*(aMatrix.dot(phaseDerivativeMatrix[:,:,y,x]))
+        
+
+        #this bit should save still working on it 
+        with open(filename+"_"+extension1+"_DisplacementFieldX.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in displacementFieldX:
+                wr.writerow(row)
+        
+
+        return distortionField
+
+
+
 # Create, save, and return an image for any real field in a graphics window
 def createFieldImage(filename,fieldData,folder,extension,size_x,size_y):
 	field = []
