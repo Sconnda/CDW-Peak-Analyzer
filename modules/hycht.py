@@ -156,7 +156,7 @@ def findDisplacementData(filename,extension1,extension2,g1,g2):
         return displacementFieldX, displacementFieldY
 
 
-def findDistortionField(filename,extension1,extension2,g1,g2,size_x,size_y)
+def findDistortionField(filename,extension1,extension2,g1,g2,size_x,size_y):
         
         #begining of this is the same as findDisplacementField, this is done to avoid compounding errors by differentiating the phase instead of the displacement field
         PhaseData1 = []
@@ -223,7 +223,7 @@ def findDistortionField(filename,extension1,extension2,g1,g2,size_x,size_y)
                 dPg1dy[y][x] = dpdy
 
                 if x<10 and y<10:
-                    print("G1: dpdx is " + dpdx + " dpdy is " + dpdy)
+                    print("G1: dpdx is " + str(dpdx) + " dpdy is " + str(dpdy))
 
 
 
@@ -253,7 +253,7 @@ def findDistortionField(filename,extension1,extension2,g1,g2,size_x,size_y)
                 dPg2dy[y][x] = dpdy
 
                 if x<10 and y<10:
-                    print("G2: dpdx is " + dpdx + " dpdy is " + dpdy)
+                    print("G2: dpdx is " + str(dpdx) + " dpdy is " + str(dpdy))
 
 
         #make a zero matrix for the distortion matrix
@@ -267,16 +267,95 @@ def findDistortionField(filename,extension1,extension2,g1,g2,size_x,size_y)
         for y in range(size_y):
             for x in range(size_x):
                 distortionField[:,:,y,x] = -(1/(2*pi))*(aMatrix.dot(phaseDerivativeMatrix[:,:,y,x]))
-        
 
-        #this bit should save still working on it 
-        with open(filename+"_"+extension1+"_DisplacementFieldX.csv", 'w',newline='') as f:
-            wr = csv.writer(f)
-            for row in displacementFieldX:
-                wr.writerow(row)
-        
 
         return distortionField
+
+
+#returns the strain and rotation matricies for every point as numpy arrays of shape (2,2,size_y,size_x) 
+def findStrainAndRotation(filename,extension1,distortionField,size_x,size_y):
+        
+        #make the an array to store the transpose 
+        transposeDistortion = np.zeros((2,2,size_y,size_x))
+
+        #make the transpose
+        transposeDistortion[0,0,:,:] = distortionField[0,0,:,:]
+        transposeDistortion[1,1,:,:] = distortionField[1,1,:,:]
+        transposeDistortion[0,1,:,:] = distortionField[1,0,:,:]
+        transposeDistortion[1,0,:,:] = distortionField[0,1,:,:]
+
+        #the strain field at every r (for small distortions) is 1/2(distortion + transposeDistortion)
+        strain = (transposeDistortion+distortionField)/2
+
+        #the rotation matrix at every r (for small distortions) is 1/2(distortion - transposeDistortion)
+        rotation = (distortionField-transposeDistortion)/2
+
+        #create size_x by size_y arrays to store the components of the strain and rotation fields
+        strainXX = strain[0,0,:,:]
+        strainXY = strain[0,1,:,:]
+        strainYX = strain[1,0,:,:]
+        strainYY = strain[1,1,:,:]
+
+        #rotation xx and yy should be all zero but including them to make sure nothings going wrong
+
+        rotationXX = rotation[0,0,:,:]
+        rotationXY = rotation[0,1,:,:]
+        rotationYX = rotation[1,0,:,:]
+        rotationYY = rotation[1,1,:,:]
+        
+        
+        
+
+        #now we push them all out as csv files
+
+        #strain ones
+        with open(filename+"_"+extension1+"_StrainXX.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in strainXX:
+                wr.writerow(row)
+
+
+        with open(filename+"_"+extension1+"_StrainXY.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in strainXY:
+                wr.writerow(row)
+
+        with open(filename+"_"+extension1+"_StrainYX.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in strainYX:
+                wr.writerow(row)
+
+        with open(filename+"_"+extension1+"_StrainYY.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in strainYY:
+                wr.writerow(row)
+
+        #rotation ones
+
+        with open(filename+"_"+extension1+"_RotationXX.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in rotationXX:
+                wr.writerow(row)
+
+        with open(filename+"_"+extension1+"_RotationXY.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in rotationXY:
+                wr.writerow(row)
+
+        with open(filename+"_"+extension1+"_RotationYX.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in rotationYX:
+                wr.writerow(row)
+
+        with open(filename+"_"+extension1+"_RotationYY.csv", 'w',newline='') as f:
+            wr = csv.writer(f)
+            for row in rotationYY:
+                wr.writerow(row)
+
+        return strain, rotation
+
+
+
 
 
 
@@ -294,6 +373,10 @@ def createFieldImage(filename,fieldData,folder,extension,size_x,size_y):
 	if extension == "Phase":
 		min_point = -2*pi
 		max_point = 2*pi
+	elif extension == "StrainXX":
+		min_point = -.1
+		max_point = .1
+
 	else:
 		min_point = min(min(field))
 		max_point = max(max(field))
@@ -301,11 +384,19 @@ def createFieldImage(filename,fieldData,folder,extension,size_x,size_y):
 	# Draw data
 	img = NewImage.new("RGB", (size_x, size_y))
 	putpixel = img.putpixel
+        
 
-	for y in range(size_y):
-		for x in range(size_x):
-			color = int((field[y][x]-min_point)/(max_point-min_point)*255)
-			putpixel((x,y),(color,color,color))
+	if max_point!=min_point:
+		for y in range(size_y):
+			for x in range(size_x):
+				color = int((field[y][x]-min_point)/(max_point-min_point)*255)
+				putpixel((x,y),(color,color,color))
+	elif max_point==min_point:
+		for y in range(size_y):
+			for x in range(size_x):
+				color = int(field[y][x]-min_point)
+				putpixel((x,y),(color,color,color))
+
 
 	img.save(folder+"/"+filename+"_"+folder+"_"+extension+".gif",'gif')
 
