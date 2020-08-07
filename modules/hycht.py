@@ -46,23 +46,23 @@ def findPhaseData(filename,size_x,size_y,G,extension):
 
 	return phaseData
 
-def gradient(data,x,y,size_x,size_y):
+def phaseGradient(data,x,y,size_x,size_y):
 	grad_x = 0
 	grad_y = 0
 
 	if x == 0:
-		grad_x = data[y][1]-data[y][0]
+		grad_x = sin(data[y][1]-data[y][0])
 	elif x == size_x-1:
-		grad_x = data[y][x]-data[y][x-1]
+		grad_x = sin(data[y][x]-data[y][x-1])
 	else:
-		grad_x = (data[y][x+1]-data[y][x-1])/2
+		grad_x = (sin(data[y][x+1]-data[y][x])+sin(data[y][x]-data[y][x-1]))/2
 
 	if y == 0:
-		grad_y = data[1][x]-data[0][x]
+		grad_y = sin(data[1][x]-data[0][x])
 	elif y == size_y-1:
-		grad_y = data[y][x]-data[y-1][x]
+		grad_y = sin(data[y][x]-data[y-1][x])
 	else:
-		grad_y = (data[y+1][x]-data[y-1][x])/2
+		grad_y = (sin(data[y+1][x]-data[y][x])+sin(data[y][x]-data[y-1][x]))/2
 
 	grad = (grad_x,grad_y)
 	return grad
@@ -81,7 +81,7 @@ def find_gR_Data(filename,size_x,size_y,extension):
 	gR_y = [[0 for x in range(size_x)] for y in range(size_y)]
 	for y in range(size_y):
 		for x in range(size_x):
-			grad = gradient(rawPhaseData,x,y,size_x,size_y)
+			grad = phaseGradient(rawPhaseData,x,y,size_x,size_y)
 			gR_x[y][x] = 2*pi*grad[0]
 			gR_y[y][x] = 2*pi*grad[1]
 
