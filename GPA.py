@@ -382,6 +382,26 @@ def main():
 	imgDisplacementFieldX = fieldImage(displacementDataX,"BraggFiltered1","DisplacementFieldX")
 	imgDisplacementFieldY = fieldImage(displacementDataY,"BraggFiltered1","DisplacementFieldY")
 
+	# Generate distortion field (numpy array shape 2,2,size_y,size_x)
+	distortionField = findDistortionField(filename,"BraggFiltered1","BraggFiltered2",G1,G2,size_x,size_y)
+	print(distortionField)
+
+	# Generate the strain and rotation arrays
+	strainArray, rotationArray = findStrainAndRotation(filename, "BraggFiltered1",distortionField,size_x,size_y)
+	fieldImage(strainArray[0,0,:,:],"BraggFiltered1","StrainXX")
+	fieldImage(strainArray[1,0,:,:],"BraggFiltered1","StrainYX")
+	fieldImage(strainArray[0,1,:,:],"BraggFiltered1","StrainXY")
+	fieldImage(strainArray[1,1,:,:],"BraggFiltered1","StrainYY")
+	fieldImage(rotationArray[0,0,:,:],"BraggFiltered1","RotationXX")
+	fieldImage(rotationArray[1,0,:,:],"BraggFiltered1","RotationYX")
+	fieldImage(rotationArray[0,1,:,:],"BraggFiltered1","RotationXY")
+	fieldImage(rotationArray[1,1,:,:],"BraggFiltered1","RotationYY")
+
+
+
+
+
+
 	win.getMouse()
 	win.close()
 
