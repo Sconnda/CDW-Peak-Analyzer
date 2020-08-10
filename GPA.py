@@ -335,29 +335,33 @@ def main():
 	# latticeSpacing = 0
 	# total_bonds = 0
 	# for i,peak in enumerate(peaks):
-	#	x,y = peak
-	#	for j,bonded in enumerate(bondMatrix[i]):
-	#		if bonded == 1:
-	#			x2,y2 = peaks[j]
-	#			total_bonds += 1
-	#			latticeSpacing += sqrt((x2-x)**2 + (y2-y)**2)
+	# 	x,y = peak
+	# 	for j,bonded in enumerate(bondMatrix[i]):
+	# 		if bonded == 1:
+	# 			x2,y2 = peaks[j]
+	# 			total_bonds += 1
+	# 			latticeSpacing += sqrt((x2-x)**2 + (y2-y)**2)
 	# latticeSpacing /= total_bonds
 
 	rec_data_masked,G = selectG(peaks,num_peaks)
 	rec_data_masked1, rec_data_masked2 = rec_data_masked
 	G1, G2 = G
+	with open(filename+"_G.csv", 'w',newline='') as f:
+		wr = csv.writer(f)
+		wr.writerow(G1)
+		wr.writerow(G2)
 
 	# Generate and show Bragg filtered data for both values of g
 	braggFilteredData1 = findInvFT(filename,rec_data_masked1,"BraggFiltered1",size_x,size_y)
 	imgIFT1 = IFTImage(braggFilteredData1,braggFilteredData_return_type,"BraggFiltered1")
-	winIFT1 = GraphWin('Bragg Filtered Data: g1', int(size_x*scale), int(size_y*scale))
+	winIFT1 = GraphWin("Bragg Filtered Data (g1): "+braggFilteredData_return_type, int(size_x*scale), int(size_y*scale))
 	imgIFT1.draw(winIFT1)
 	winIFT1.getMouse()
 	winIFT1.close()
 
 	braggFilteredData2 = findInvFT(filename,rec_data_masked2,"BraggFiltered2",size_x,size_y)
 	imgIFT2 = IFTImage(braggFilteredData2,braggFilteredData_return_type,"BraggFiltered2")
-	winIFT2 = GraphWin('Bragg Filtered Data: g2', int(size_x*scale), int(size_y*scale))
+	winIFT2 = GraphWin("Bragg Filtered Data (g2): "+braggFilteredData_return_type, int(size_x*scale), int(size_y*scale))
 	imgIFT2.draw(winIFT2)
 	winIFT2.getMouse()
 	winIFT2.close()
@@ -377,30 +381,24 @@ def main():
 	img_gR_Field2_y = fieldImage(gR_Data2[1],"BraggFiltered2","g(r)_y")
 
 	# # Generate displacement image
-	displacementDataX, displacementDataY = findDisplacementData(filename,"BraggFiltered1","BraggFiltered2",G1,G2)
+	displacementDataX, displacementDataY = findDisplacementData(filename,G1,G2)
 	
-	imgDisplacementFieldX = fieldImage(displacementDataX,"BraggFiltered1","DisplacementFieldX")
-	imgDisplacementFieldY = fieldImage(displacementDataY,"BraggFiltered1","DisplacementFieldY")
+	imgDisplacementFieldX = fieldImage(displacementDataX,"FieldImages","DisplacementFieldX")
+	imgDisplacementFieldY = fieldImage(displacementDataY,"FieldImages","DisplacementFieldY")
 
 	# Generate distortion field (numpy array shape 2,2,size_y,size_x)
 	distortionField = findDistortionField(filename,"BraggFiltered1","BraggFiltered2",G1,G2,size_x,size_y)
-	print(distortionField)
 
 	# Generate the strain and rotation arrays
-	strainArray, rotationArray = findStrainAndRotation(filename, "BraggFiltered1",distortionField,size_x,size_y)
-	fieldImage(strainArray[0,0,:,:],"BraggFiltered1","StrainXX")
-	fieldImage(strainArray[1,0,:,:],"BraggFiltered1","StrainYX")
-	fieldImage(strainArray[0,1,:,:],"BraggFiltered1","StrainXY")
-	fieldImage(strainArray[1,1,:,:],"BraggFiltered1","StrainYY")
-	fieldImage(rotationArray[0,0,:,:],"BraggFiltered1","RotationXX")
-	fieldImage(rotationArray[1,0,:,:],"BraggFiltered1","RotationYX")
-	fieldImage(rotationArray[0,1,:,:],"BraggFiltered1","RotationXY")
-	fieldImage(rotationArray[1,1,:,:],"BraggFiltered1","RotationYY")
-
-
-
-
-
+	strainArray, rotationArray = findStrainAndRotation(filename,distortionField,size_x,size_y)
+	fieldImage(strainArray[0,0,:,:],"FieldImages","StrainXX")
+	fieldImage(strainArray[1,0,:,:],"FieldImages","StrainYX")
+	fieldImage(strainArray[0,1,:,:],"FieldImages","StrainXY")
+	fieldImage(strainArray[1,1,:,:],"FieldImages","StrainYY")
+	fieldImage(rotationArray[0,0,:,:],"FieldImages","RotationXX")
+	fieldImage(rotationArray[1,0,:,:],"FieldImages","RotationYX")
+	fieldImage(rotationArray[0,1,:,:],"FieldImages","RotationXY")
+	fieldImage(rotationArray[1,1,:,:],"FieldImages","RotationYY")
 
 	win.getMouse()
 	win.close()
