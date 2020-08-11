@@ -29,7 +29,7 @@ def findFT(filename,peaks,size_x,size_y, width, height):
 	data = np.loadtxt(filename+".txt")
 	data_list = data.tolist()
 	min_data = min(min(data_list))
-	data += min_data
+	data -= min_data
 
 	rec_data = np.fft.fft2(data)
 	rec_data = np.fft.fftshift(rec_data)
@@ -131,8 +131,8 @@ def createRecDataImage(filename,rec_data,num_peaks,width,height,return_type,exte
 			putpixel((X,Y),(color,color,color))
 
 	if return_type == "Re":
-		img.save(filename+"_"+extension+".gif",'gif')
-		img = Image(Point(int(width/2),int(height/2)), filename+"_"+extension+".gif")
+		img.save(filename+"_"+extension+"_Re.gif",'gif')
+		img = Image(Point(int(width/2),int(height/2)), filename+"_"+extension+"_Re.gif")
 	elif return_type == "Im":
 		img.save(filename+"_"+extension+"_Im.gif",'gif')
 		img = Image(Point(int(width/2),int(height/2)), filename+"_"+extension+"_Im.gif")
@@ -152,6 +152,8 @@ def findInvFT(filename,rec_data,extension,size_x,size_y):
 	rec_data_re = np.array(rec_data[0])
 	rec_data_im = np.array(rec_data[1])
 	rec_data = rec_data_re + 1j*rec_data_im
+
+	rec_data = np.fft.fftshift(rec_data)
 
 	data = np.fft.ifft2(rec_data)
 	data_re = data.real.tolist()

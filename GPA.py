@@ -181,6 +181,8 @@ def selectG(peaks,num_peaks):
 		for j in range(size_x):
 			rec_data_mag[i][j] = sqrt(rec_data[0][i][j]**2+rec_data[1][i][j]**2)
 
+	imgFT = FTImage(rec_data,num_peaks,"Re","FT")
+	imgFT = FTImage(rec_data,num_peaks,"Im","FT")
 	imgFT = FTImage(rec_data,num_peaks,"Mag","FT")
 	winFT = GraphWin('Fourier Transform', FTImgWidth, FTImgHeight)
 	imgFT.draw(winFT)
@@ -235,8 +237,12 @@ def selectG(peaks,num_peaks):
 	# Apply mask on the Fourier Transform
 	mask = stepFTMask
 	rec_data_masked1 = mask(rec_data, G1_x, G1_y, radius1)
+	imgFT_masked1 = FTImage(rec_data_masked1,num_peaks,"Re","FT_masked1")
+	imgFT_masked1 = FTImage(rec_data_masked1,num_peaks,"Im","FT_masked1")
 	imgFT_masked1 = FTImage(rec_data_masked1,num_peaks,"Mag","FT_masked1")
 	rec_data_masked2 = mask(rec_data, G2_x, G2_y, radius2)
+	imgFT_masked2 = FTImage(rec_data_masked2,num_peaks,"Re","FT_masked2")
+	imgFT_masked2 = FTImage(rec_data_masked2,num_peaks,"Im","FT_masked2")
 	imgFT_masked2 = FTImage(rec_data_masked2,num_peaks,"Mag","FT_masked2")
 
 	return (rec_data_masked1,rec_data_masked2), ((G1_x,G1_y),(G2_x,G2_y))

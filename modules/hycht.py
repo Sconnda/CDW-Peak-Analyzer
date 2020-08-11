@@ -125,11 +125,10 @@ def findDisplacementData(filename,g1,g2):
         #g2 = np.array([[7],[4]])
 
         #make a g matrix
-        gMatrix = np.vstack((g1,g2))
+        gTMatrix = np.vstack((g1,g2))
         
         #transpose and invert it according to the paper to get the a matrix
-        gMatrixTranspose = np.transpose(gMatrix)
-        aMatrix = np.linalg.inv(gMatrixTranspose)
+        aMatrix = np.linalg.inv(gTMatrix)
 
         #seperate a1 and a2 vectors
         a1 = np.array([[aMatrix[0,0]],[aMatrix[1,0]]])
@@ -176,11 +175,11 @@ def findDistortionField(filename,extension1,extension2,g1,g2,size_x,size_y):
                 PhaseData2.append(row)
 
         #make a g matrix
-        gMatrix = np.vstack((g1,g2))
+        gTMatrix = np.vstack((g1,g2))
         
         # Invert it according to the paper to get the a matrix
         #   Note: vstack arranges the matrix so that it is already transposed as in the paper
-        aMatrix = np.linalg.inv(gMatrix)
+        aMatrix = np.linalg.inv(gTMatrix)
 
         #create 0 matricies to hold the derivatives        
         dPg1dx = [[0 for x in range(size_x)] for y in range(size_y)]
