@@ -28,6 +28,7 @@ def findFT(filename,peaks,size_x,size_y, width, height):
 
 	data = np.loadtxt(filename+".txt")
 	data_list = data.tolist()
+	data = np.array(data)
 	min_data = min(min(data_list))
 	data -= min_data
 
@@ -81,7 +82,7 @@ def gaussianFTMask(rec_data, kx_center, ky_center, radius):
 	return rec_data_filtered_re,rec_data_filtered_im
 
 def highPassFilterMask(kxSc,kySc):
-	return (1-exp(-pi*(kxSc**2+kySc**2)/0.001))
+	return (1-exp(-pi*(kxSc**2+kySc**2)/0.0001))
 
 def globalFTFilter(rec_data):
 	width = len(rec_data[0])
