@@ -3,6 +3,8 @@ import sys
 
 import numpy as np
 
+import csv
+
 from PIL import Image as NewImage
 
 # Declaring global variables_____________________
@@ -34,8 +36,21 @@ def main():
 	print("________________________________")
 
 	imgL = img.convert("L")
-	data = np.array(imgL)
-	print(data)
+
+	# From luminosity data
+	data = np.array(imgL).tolist()
+
+	# # From red to blue color scale
+	# dataL = np.array(imgL).tolist()
+	# dataL = np.array(dataL)-255
+	# imgHSV = img.convert("HSV")
+	# dataH = np.array(imgHSV)[:,:,0].tolist()
+	# dataH = np.array(dataH)-128
+	# print(dataL)
+	# print(np.amax(dataL))
+	# print(np.amin(dataL))
+	# dataH = dataH/abs(dataH)
+	# data = dataH*dataL
 
 	row1 = ["1","2"]
 	with open(filename+".txt", 'w',newline='') as f:

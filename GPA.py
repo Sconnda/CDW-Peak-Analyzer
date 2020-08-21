@@ -79,46 +79,6 @@ def setBackground(data):
 	img = Image(Point(int(scale*size_x/2),int(scale*size_y/2)), filename+"_Scaled.gif")
 	return img
 
-# Stores a file for and returns the "j-matrix"
-#   A j-matrix is a 2D matrix with the width and height of the CDW image
-#   Each point in the j-matrix corresponds to a point in the image
-#   The value of each point is the index of the closest peak as stored in filename+"_Peaks.csv"
-def retJMatrix(peaks,size_x,size_y):
-	noJMatrix = not os.path.exists(filename+"_jMatrix.csv")
-
-	if noJMatrix:
-		return findJMatrix(filename,peaks,size_x,size_y)
-
-	jMatrix = []
-	with open(filename+"_jMatrix.csv",newline='') as file:
-		reader = csv.reader(file,delimiter=',',quotechar='|')
-		for row in reader:
-			for i,x in enumerate(row):
-				row[i] = float(x)
-			jMatrix.append(row)
-
-	return jMatrix
-
-# Returns the bond matrix, a 2D array that indicates how all the points are interconnected
-#   The bond matrix has a width and height equal to the number of peaks
-#   The indices (i,j) within the array identifies two peaks by index
-#   The point (i,j) will be 1 if peaks i and j are connected and 0 if they are not
-def retTriangulation(jMatrix,n_peaks,size_x,size_y):
-	noTriangulation = not os.path.exists(filename+"_Triangulation.csv")
-
-	if noTriangulation:
-		return triangulation(jMatrix,n_peaks,size_x,size_y)
-
-	bondMatrix = []
-	with open(filename+"_Triangulation.csv",newline='') as file:
-		reader = csv.reader(file,delimiter=',',quotechar='|')
-		for row in reader:
-			for i,x in enumerate(row):
-				row[i] = float(x)
-			bondMatrix.append(row)
-
-	return bondMatrix
-
 # Return an image that shows the Fourier transform in k-space
 def FTImage(rec_data,num_peaks,return_type,extension):
 	global FTImgWidth, FTImgHeight
@@ -133,19 +93,6 @@ def FTImage(rec_data,num_peaks,return_type,extension):
 		img = Image(Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0)), filename+"_"+extension+"_Mag.gif")
 
 	return img
-
-# def peakWindow(local_data):
-# 	min_point = min(min(local_data))
-# 	max_point = max(max(local_data))
-# 	width = len(local_data[0])
-# 	height = len(local_data)
-# 	img = NewImage.new("RGB", (500, 500))
-# 	putpixel = img.putpixel
-# 	for y in range(500):
-# 		for x in range(500):
-# 			color = int((local_data[int(y*height/500)][int(x*width/500)]-min_point)/(max_point-min_point)*255)
-# 			putpixel((x,y),(color,color,color))
-# 	img.show()
 
 def brightestPeak(mouse, rec_data):
 	x0 = int(size_x*mouse.getX()/FTImgWidth)
@@ -340,25 +287,14 @@ def main():
 		mark.draw(win)
 	num_peaks = len(peaks)
 
-	# # Calculate the lattice spacing (useful in determing the scale for many calculations)
-	# jMatrix = retJMatrix(peaks,size_x,size_y)
-	# bondMatrix = retTriangulation(jMatrix,num_peaks,size_x,size_y)
-
-	# global latticeSpacing
-	# latticeSpacing = 0
-	# total_bonds = 0
-	# for i,peak in enumerate(peaks):
-	# 	x,y = peak
-	# 	for j,bonded in enumerate(bondMatrix[i]):
-	# 		if bonded == 1:
-	# 			x2,y2 = peaks[j]
-	# 			total_bonds += 1
-	# 			latticeSpacing += sqrt((x2-x)**2 + (y2-y)**2)
-	# latticeSpacing /= total_bonds
-
 	rec_data_masked,G = selectG(peaks,num_peaks)
 	rec_data_masked1, rec_data_masked2 = rec_data_masked
 	G1, G2 = G
+
+	# # Specifically for perfect lattice
+	# G1 = (1/30,-1/30/sqrt(3))
+	# G2 = (0,1/15/sqrt(3))
+
 	with open(filename+"_G.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
 		wr.writerow(G1)

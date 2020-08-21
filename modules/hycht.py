@@ -21,6 +21,9 @@ exp = np.exp
 
 # SKANDA
 
+def mag(re,im):
+    return sqrt(re**2+im**2)
+
 def findPhaseData(filename,size_x,size_y,G,extension):
 	G_x = G[0]
 	G_y = G[1]
@@ -68,34 +71,43 @@ def phaseGradient(data,x,y,size_x,size_y):
 	return grad
 
 def find_gR_Data(filename,size_x,size_y,extension):
-	rawPhaseData = []
-	with open(filename+"_"+extension+"_RawPhase.csv",newline='') as file:
-		reader = csv.reader(file,delimiter=',',quotechar='|')
-		for row in reader:
-			for i,x in enumerate(row):
-				row[i] = float(x)
-			rawPhaseData.append(row)
-	rawPhaseData = np.array(rawPhaseData)
+    rawPhaseData = []
+    with open(filename+"_"+extension+"_RawPhase.csv",newline='') as file:
+        reader = csv.reader(file,delimiter=',',quotechar='|')
+        for row in reader:
+            for i,x in enumerate(row):
+                row[i] = float(x)
+            rawPhaseData.append(row)
+    rawPhaseData = np.array(rawPhaseData)
 
-	gR_x = [[0 for x in range(size_x)] for y in range(size_y)]
-	gR_y = [[0 for x in range(size_x)] for y in range(size_y)]
-	for y in range(size_y):
-		for x in range(size_x):
-			grad = phaseGradient(rawPhaseData,x,y,size_x,size_y)
-			gR_x[y][x] = 2*pi*grad[0]
-			gR_y[y][x] = 2*pi*grad[1]
+    mag_vect = np.vectorize(mag)
+    gR_x = [[0 for x in range(size_x)] for y in range(size_y)]
+    gR_y = [[0 for x in range(size_x)] for y in range(size_y)]
 
-	with open(filename+"_"+extension+"_g(r)_x.csv", 'w',newline='') as f:
-		wr = csv.writer(f)
-		for row in gR_x:
-			wr.writerow(row)
+    for y in range(size_y):
+        for x in range(size_x):
+            grad = phaseGradient(rawPhaseData,x,y,size_x,size_y)
+            gR_x[y][x] = grad[0]/(2*pi)
+            gR_y[y][x] = grad[1]/(2*pi)
 
-	with open(filename+"_"+extension+"_g(r)_y.csv", 'w',newline='') as f:
-		wr = csv.writer(f)
-		for row in gR_y:
-			wr.writerow(row)
+    gR = mag_vect(np.array(gR_x), np.array(gR_y))
 
-	return gR_x,gR_y
+    with open(filename+"_"+extension+"_g(r)_x.csv", 'w',newline='') as f:
+        wr = csv.writer(f)
+        for row in gR_x:
+            wr.writerow(row)
+
+    with open(filename+"_"+extension+"_g(r)_y.csv", 'w',newline='') as f:
+        wr = csv.writer(f)
+        for row in gR_y:
+            wr.writerow(row)
+
+    with open(filename+"_"+extension+"_g(r).csv", 'w',newline='') as f:
+        wr = csv.writer(f)
+        for row in gR:
+            wr.writerow(row)
+
+    return gR_x,gR_y
 
 # DAN
 
@@ -309,17 +321,25 @@ def createFieldImage(filename,fieldData,folder,extension,size_x,size_y):
 
 	# Find extrema
     if extension == "Phase":
-        min_point = -2*pi
-        max_point = 2*pi
+        min_point = -pi
+        max_point = pi
+    elif extension == "TwistAngle" or extension == "TwistAngleDifference":
+        field_np = np.array(field)
+        min_point = 0
+        max_point = field_np.mean()+np.std(field_np)
     elif extension in ["StrainXX","StrainYX","StrainXY","StrainYY","RotationXX","RotationYX","RotationXY","RotationYY"]:
         min_point = -.1
         max_point = .1
     elif extension in ["g(r)_x","g(r)_y"]:
-        min_point = -3
-        max_point = 3
+        min_point = min(min(field))
+        max_point = max(max(field))
+        min_point = min(min_point,-max_point)
+        max_point = max(-min_point,max_point)
     else:
         min_point = min(min(field))
         max_point = max(max(field))
+    print("Black: "+str(min_point))
+    print("White: "+str(max_point))
 
     # Draw data
     img = NewImage.new("RGB", (size_x, size_y))
