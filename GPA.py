@@ -49,10 +49,17 @@ def createDataImage(data):
 	# Draw data
 	img = NewImage.new("RGB", (size_x, size_y))
 	putpixel = img.putpixel
-	for y in range(size_y):
-		for x in range(size_x):
-			color = int((data[y][x]-min_point)/(max_point-min_point)*255)
-			putpixel((x,y),(color,color,color))
+	
+	if max_point == min_point:
+		for y in range(size_y):
+			for x in range(size_x):
+				color = int(max_point)
+				putpixel((x,y),(color,color,color))
+	else:
+		for y in range(size_y):
+			for x in range(size_x):
+				color = int((data[y][x]-min_point)/(max_point-min_point)*255)
+				putpixel((x,y),(color,color,color))
 
 	img.save(filename+".gif",'gif')
 
@@ -326,8 +333,8 @@ def main():
 	img_gR_Field2_x = fieldImage(gR_Data2[0],"BraggFiltered2","g(r)_x")
 	img_gR_Field2_y = fieldImage(gR_Data2[1],"BraggFiltered2","g(r)_y")
 
-	# Generate displacement image
-	displacementDataX, displacementDataY = findDisplacementData(filename,G1,G2)
+	# # Generate displacement image
+	displacementDataX, displacementDataY = findDisplacementData(filename,size_x,size_y,G1,G2)
 	
 	imgDisplacementFieldX = fieldImage(displacementDataX,"FieldImages","DisplacementFieldX")
 	imgDisplacementFieldY = fieldImage(displacementDataY,"FieldImages","DisplacementFieldY")
