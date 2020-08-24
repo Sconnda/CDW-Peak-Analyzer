@@ -181,6 +181,14 @@ def selectG(peaks,num_peaks):
 	winFT.getMouse()
 	winFT.close()
 
+	# Specifically for perfect lattice
+	G1_x = 1/30
+	G1_y = -1/30/sqrt(3)
+	G2_x = 0
+	G2_y = 1/15/sqrt(3)
+	radius1 = 0.01
+	radius2 = 0.01
+
 	# Apply mask on the Fourier Transform
 	mask = stepFTMask
 	rec_data_masked1 = mask(rec_data, G1_x, G1_y, radius1)
@@ -283,10 +291,6 @@ def main():
 	rec_data_masked,G = selectG(peaks,num_peaks)
 	rec_data_masked1, rec_data_masked2 = rec_data_masked
 	G1, G2 = G
-
-	# # Specifically for perfect lattice
-	# G1 = (1/30,-1/30/sqrt(3))
-	# G2 = (0,1/15/sqrt(3))
 
 	with open(filename+"_G.csv", 'w',newline='') as f:
 		wr = csv.writer(f)
