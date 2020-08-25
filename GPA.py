@@ -11,6 +11,8 @@ from modules.bondFunctions import *
 from modules.reciprocalLattice import *
 from modules.hycht import *
 
+#testing git merge
+
 # Declaring global variables_____________________
 filename = "CDW_Data"
 # Variables related to peaks
