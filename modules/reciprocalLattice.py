@@ -73,10 +73,10 @@ def gaussianFTMask(rec_data, kx_center, ky_center, radius):
 	rec_data_filtered_re = [[0 for x in range(width)] for y in range(height)]
 	rec_data_filtered_im = [[0 for x in range(width)] for y in range(height)]
 	for i in range(height):
-		ky = 4.0*pi*(i-height/2.0)/height/sqrt(3)
+		ky = pi*(i-height/2.0)/height
 		for j in range(width):
-			kx = 4.0*pi*(j-width/2.0)/width/sqrt(3)
-			mask = exp(-((kx-kx_center)**2+(ky-ky_center)**2)/(2*sigma**2))
+			kx = (j-width/2.0)/width
+			mask = exp(-4*pi*((kx-kx_center)**2+(ky-ky_center)**2)/(2*sigma**2))
 			rec_data_filtered_re[i][j] = mask*rec_data_re[i][j]
 			rec_data_filtered_im[i][j] = mask*rec_data_im[i][j]
 	return rec_data_filtered_re,rec_data_filtered_im
