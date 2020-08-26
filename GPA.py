@@ -28,7 +28,7 @@ FTWidth = 505
 FTHeight = 505
 FTImgWidth = 750
 FTImgHeight = 750
-searchSize = 6
+searchSize = 7
 
 braggFilteredData_return_type = "Phase"
 
@@ -101,7 +101,7 @@ def brightestPeak(mouse, rec_data):
 	peak = rec_data[y0][x0]
 	x = x0
 	y = y0
-	local_data = [[0 for x in range(searchSize)] for y in range(searchSize)]
+	# local_data = [[0 for x in range(searchSize)] for y in range(searchSize)]
 	for i in range(searchSize):
 		dy = i-int(searchSize/2)
 		y_temp = y0+dy
@@ -113,7 +113,7 @@ def brightestPeak(mouse, rec_data):
 			if y_temp >= size_y or x_temp < 0:
 				continue
 			peak_temp = rec_data[y_temp][x_temp]
-			local_data[i][j] = filtered_rec_data[y_temp][x_temp]
+			# local_data[i][j] = filtered_rec_data[y_temp][x_temp]
 			if peak_temp > peak:
 				peak = peak_temp
 				x = x_temp
@@ -122,6 +122,37 @@ def brightestPeak(mouse, rec_data):
 	# peakWindow(local_data)
 
 	return Point(FTImgWidth*x/size_x,FTImgHeight*y/size_y)
+
+def COMBrightness(point, rec_data):
+	x0 = int(size_x*point.getX()/FTImgWidth)
+	y0 = int(size_y*point.getY()/FTImgHeight)
+	# filtered_rec_data = globalFTFilter(rec_data)
+	peak = rec_data[y0][x0]
+	cx = 0
+	cy = 0
+	total_mass = 0
+	# local_data = [[0 for x in range(searchSize)] for y in range(searchSize)]
+	for i in range(searchSize):
+		dy = i-int(searchSize/2)
+		y_temp = y0+dy
+		for j in range(searchSize):
+			dx = j-int(searchSize/2)
+			x_temp = x0+dx
+			if x_temp >= size_x or x_temp < 0:
+				continue
+			if y_temp >= size_y or x_temp < 0:
+				continue
+			peak_temp = rec_data[y_temp][x_temp]
+			# local_data[i][j] = filtered_rec_data[y_temp][x_temp]
+			cx += peak_temp*x_temp
+			cy += peak_temp*y_temp
+			total_mass += peak_temp
+	cx /= total_mass
+	cy /= total_mass
+
+	# peakWindow(local_data)
+
+	return Point(FTImgWidth*cx/size_x,FTImgHeight*cy/size_y)
 
 # Return two masked FT images
 def selectG(peaks,num_peaks):
@@ -143,6 +174,7 @@ def selectG(peaks,num_peaks):
 
 	maskCenter1 = winFT.getMouse()
 	maskCenter1 = brightestPeak(maskCenter1,rec_data_mag)
+	maskCenter1 = COMBrightness(maskCenter1,rec_data_mag)
 	G1_x = (maskCenter1.getX()-FTImgWidth/2.0)/FTImgWidth
 	G1_y = (maskCenter1.getY()-FTImgHeight/2.0)/FTImgHeight
 	graphCenter1 = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
@@ -165,6 +197,7 @@ def selectG(peaks,num_peaks):
 
 	maskCenter2 = winFT.getMouse()
 	maskCenter2 = brightestPeak(maskCenter2,rec_data_mag)
+	maskCenter2 = COMBrightness(maskCenter2,rec_data_mag)
 	G2_x = (maskCenter2.getX()-FTImgWidth/2.0)/FTImgWidth
 	G2_y = (maskCenter2.getY()-FTImgHeight/2.0)/FTImgHeight
 	graphCenter2 = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
@@ -189,12 +222,12 @@ def selectG(peaks,num_peaks):
 	winFT.close()
 
 	# Specifically for perfect lattice
-	G1_x = 1/30
-	G1_y = -1/30/sqrt(3)
-	G2_x = 0
-	G2_y = 1/15/sqrt(3)
-	radius1 = 0.01
-	radius2 = 0.01
+	# G1_x = 1/30
+	# G1_y = -1/30/sqrt(3)
+	# G2_x = 0
+	# G2_y = 1/15/sqrt(3)
+	radius1 = 0.0075
+	radius2 = 0.0075
 
 	# Apply mask on the Fourier Transform
 	mask = stepFTMask
@@ -334,7 +367,7 @@ def main():
 	img_gR_Field2_y = fieldImage(gR_Data2[1],"BraggFiltered2","g(r)_y")
 
 	# # Generate displacement image
-	displacementDataX, displacementDataY = findDisplacementData(filename,size_x,size_y,G1,G2)
+	displacementDataX, displacementDataY = findDisplacementData(filename,G1,G2)
 	
 	imgDisplacementFieldX = fieldImage(displacementDataX,"FieldImages","DisplacementFieldX")
 	imgDisplacementFieldY = fieldImage(displacementDataY,"FieldImages","DisplacementFieldY")
