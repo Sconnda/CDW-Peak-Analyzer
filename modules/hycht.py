@@ -149,8 +149,8 @@ def findDisplacementData(filename,g1,g2):
         
 
         #calculate the displacement field x and y components 
-        displacementFieldX = a1[0]*PhaseData1+a2[0]*PhaseData2
-        displacementFieldY = a1[1]*PhaseData1+a2[1]*PhaseData2
+        displacementFieldX = -(1/(2*pi))*(a1[0]*PhaseData1+a2[0]*PhaseData2)
+        displacementFieldY = -(1/(2*pi))*(a1[1]*PhaseData1+a2[1]*PhaseData2)
 
         #save them as a csv file, there is only 1 extension because the displacement field is a property of the lattice not the g vector, I just picked extension1 arbitrarily
         with open(filename+"_FieldImages_DisplacementFieldX.csv", 'w',newline='') as f:
