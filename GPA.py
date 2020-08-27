@@ -176,9 +176,13 @@ def selectG(peaks,num_peaks):
 
 	maskCenter1 = winFT.getMouse()
 	maskCenter1 = brightestPeak(maskCenter1,rec_data_mag)
+	G1_x = (maskCenter1.getX()-FTImgWidth/2.0)/FTImgWidth
+	G1_y = (maskCenter1.getY()-FTImgHeight/2.0)/FTImgHeight
+	print("Brightest Peak (g1): "+str((G1_x,G1_y)))
 	maskCenter1 = COMBrightness(maskCenter1,rec_data_mag)
 	G1_x = (maskCenter1.getX()-FTImgWidth/2.0)/FTImgWidth
 	G1_y = (maskCenter1.getY()-FTImgHeight/2.0)/FTImgHeight
+	print("COM with Brightness (g1): "+str((G1_x,G1_y)))
 	graphCenter1 = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
 	ln1 = Line(graphCenter1,maskCenter1)
 	ln1.setOutline(color_rgb(0,128,255))
@@ -199,9 +203,13 @@ def selectG(peaks,num_peaks):
 
 	maskCenter2 = winFT.getMouse()
 	maskCenter2 = brightestPeak(maskCenter2,rec_data_mag)
+	G2_x = (maskCenter2.getX()-FTImgWidth/2.0)/FTImgWidth
+	G2_y = (maskCenter2.getY()-FTImgHeight/2.0)/FTImgHeight
+	print("Brightest Peak (g2): "+str((G2_x,G2_y)))
 	maskCenter2 = COMBrightness(maskCenter2,rec_data_mag)
 	G2_x = (maskCenter2.getX()-FTImgWidth/2.0)/FTImgWidth
 	G2_y = (maskCenter2.getY()-FTImgHeight/2.0)/FTImgHeight
+	print("COM with Brightness (g2): "+str((G2_x,G2_y)))
 	graphCenter2 = Point(int(FTImgWidth/2.0),int(FTImgHeight/2.0))
 	ln2 = Line(graphCenter2,maskCenter2)
 	ln2.setOutline(color_rgb(0,128,255))
@@ -228,11 +236,12 @@ def selectG(peaks,num_peaks):
 	# G1_y = -1/30/sqrt(3)
 	# G2_x = 0
 	# G2_y = 1/15/sqrt(3)
-	radius1 = 0.0075
-	radius2 = 0.0075
+	radius1 = 0.03
+	radius2 = 0.03
 
 	# Apply mask on the Fourier Transform
 	mask = stepFTMask
+	# mask = gaussianFTMask
 	rec_data_masked1 = mask(rec_data, G1_x, G1_y, radius1)
 	imgFT_masked1 = FTImage(rec_data_masked1,num_peaks,"Re","FT_masked1")
 	imgFT_masked1 = FTImage(rec_data_masked1,num_peaks,"Im","FT_masked1")
